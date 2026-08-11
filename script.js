@@ -9,8 +9,12 @@ const RARITY_TO_UPGRADE_KEY = {
     'ICONIC': null,
 };
 
+const QUALITY_ORDER = ['DEFAULT', 'GOLD', 'DIAMOND', 'RAINBOW', 'BESKAR', 'GALACTIC'];
+
 let upgradeCosts = {};
 let rebirths = [];
+let droidTaxonomy = { rarities: [], classes: [] };
+let droidNameToMeta = {};
 
 async function fetchText(path) {
     const res = await fetch(path);
@@ -67,6 +71,21 @@ function loadDroids(rows) {
     return Array.from(droids).sort((a, b) => a.localeCompare(b));
 }
 
+function loadDroidTaxonomy(rows) {
+    const rarities = new Set();
+    const classes = new Set();
+    for (let i = 1; i < rows.length; i++) {
+        const rarity = rows[i][0].trim();
+        const cls = rows[i][2] ? rows[i][2].trim() : '';
+        if (rarity) rarities.add(rarity);
+        if (cls) classes.add(cls);
+    }
+    return {
+        rarities: Array.from(rarities).sort((a, b) => a.localeCompare(b)),
+        classes: Array.from(classes).sort((a, b) => a.localeCompare(b)),
+    };
+}
+
 function loadRebirths(rows, ciclo) {
     const data = [];
     for (let i = 1; i < rows.length; i++) {
@@ -121,6 +140,21 @@ function initRenacerDropdown() {
         const opt = document.createElement('option');
         opt.value = String(i);
         opt.textContent = `Renacer ${i}`;
+        select.appendChild(opt);
+    }
+}
+
+function initSelectOptions(selectId, values, defaultLabel) {
+    const select = document.getElementById(selectId);
+    select.innerHTML = '';
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = defaultLabel;
+    select.appendChild(placeholder);
+    for (const v of values) {
+        const opt = document.createElement('option');
+        opt.value = v;
+        opt.textContent = v;
         select.appendChild(opt);
     }
 }
@@ -205,15 +239,17 @@ function renderResults(rebirthResults, maxRarity, droidName, currentRarity) {
     if (droidRarityRow) upgradeRow = upgradeCosts[droidRarityRow];
 
     const summary = document.getElementById('cost-summary');
-    const breakdownBody = document.querySelector('#cost-breakdown tbody');
+    const breakdownTable = document.getElementById('cost-breakdown');
+    const breakdownBody = breakdownTable.querySelector('tbody');
     breakdownBody.innerHTML = '';
+    breakdownTable.classList.add('hidden');
 
     if (!upgradeRow) {
         summary.innerHTML = `Tu droide <strong>${droidName}</strong> necesita llegar a ${rarityBadge(maxRarity)}. No hay tabla de mejoras disponible para esta rareza base.`;
     } else {
         const cost = computeUpgradeCost(upgradeRow, currentRarity, maxRarity);
         if (cost.total === 0) {
-            summary.innerHTML = `Tu droide <strong>${droidName}</strong> ya está en ${rarityBadge(currentRarity)}, que es igual o superior a la rareza máxima necesaria (${rarityBadge(maxRarity)}). <strong>0 chips</strong>.`;
+            summary.innerHTML = `Tu droide <strong>${droidName}</strong> ya está en ${rarityBadge(currentRarity)}, que es igual o superior a la calidad máxima necesaria (${rarityBadge(maxRarity)}). <strong>0 chips</strong>.`;
         } else {
             summary.innerHTML = `Mejorar <strong>${droidName}</strong> de ${rarityBadge(currentRarity)} a ${rarityBadge(maxRarity)} cuesta <strong>${cost.total.toLocaleString('es-ES')}</strong> chips.`;
             for (const step of cost.steps) {
@@ -225,6 +261,7 @@ function renderResults(rebirthResults, maxRarity, droidName, currentRarity) {
                 `;
                 breakdownBody.appendChild(tr);
             }
+            breakdownTable.classList.remove('hidden');
         }
     }
 
@@ -250,6 +287,41 @@ function renderResults(rebirthResults, maxRarity, droidName, currentRarity) {
 
 function getDroidRarity(droidName) {
     return window._droidRarityMap[droidName.toUpperCase()] || null;
+}
+
+function updateDroidDropdown() {
+    const rareza = document.getElementById('rareza-select').value;
+    const clase = document.getElementById('clase').value;
+    const select = document.getElementById('droide');
+    const currentValue = select.value;
+
+    const filtered = Object.keys(droidNameToMeta)
+        .filter(nameKey => {
+            const meta = droidNameToMeta[nameKey];
+            if (rareza && meta.rarity !== rareza) return false;
+            if (clase && meta.class !== clase) return false;
+            return true;
+        })
+        .map(nameKey => nameKey)
+        .sort((a, b) => a.localeCompare(b));
+
+    select.innerHTML = '';
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = filtered.length === 0
+        ? '-- Ningún droide coincide --'
+        : '-- Selecciona droide --';
+    select.appendChild(placeholder);
+    for (const nameKey of filtered) {
+        const opt = document.createElement('option');
+        opt.value = nameKey;
+        opt.textContent = nameKey;
+        select.appendChild(opt);
+    }
+
+    if (currentValue && filtered.includes(currentValue)) {
+        select.value = currentValue;
+    }
 }
 
 function showError(msg) {
@@ -279,13 +351,21 @@ async function init() {
         const droidNames = loadDroids(droidsRows);
         initDroidDropdown(droidNames);
 
-        const rarenessMap = {};
-        for (let i = 1; i < droidsRows.length; i++) {
+        droidTaxonomy = loadDroidTaxonomy(droidsRows);
+        initSelectOptions('rareza-select', droidTaxonomy.rarities, '-- Todas --');
+        initSelectOptions('clase', droidTaxonomy.classes, '-- Todas --');
+
+        const qualityMap = {};
+        droidNameToMeta = {};
+        for (let i = 1; droidsRows[i] && droidsRows[i].length > 0; i++) {
             const rarity = droidsRows[i][0].trim();
             const name = droidsRows[i][1].trim();
-            if (name) rarenessMap[name.toUpperCase()] = rarity;
+            const cls = droidsRows[i][2] ? droidsRows[i][2].trim() : '';
+            if (!name) continue;
+            qualityMap[name.toUpperCase()] = rarity;
+            droidNameToMeta[name.toUpperCase()] = { rarity, class: cls };
         }
-        window._droidRarityMap = rarenessMap;
+        window._droidRarityMap = qualityMap;
 
         rebirths = [
             ...loadRebirths(parseCSV(c1Text), 1),
@@ -298,6 +378,9 @@ async function init() {
         return;
     }
 
+    document.getElementById('rareza-select').addEventListener('change', updateDroidDropdown);
+    document.getElementById('clase').addEventListener('change', updateDroidDropdown);
+
     document.getElementById('buscar').addEventListener('click', () => {
         const droide = document.getElementById('droide').value;
         if (!droide) {
@@ -306,10 +389,10 @@ async function init() {
         }
         const ciclo = document.getElementById('ciclo').value;
         const renacer = document.getElementById('renacer').value;
-        const rareza = document.getElementById('rareza').value;
+        const calidad = document.getElementById('calidad').value;
 
         const { results, maxRarity } = findRebirths(droide, ciclo, renacer);
-        renderResults(results, maxRarity, droide, rareza);
+        renderResults(results, maxRarity, droide, calidad);
     });
 }
 

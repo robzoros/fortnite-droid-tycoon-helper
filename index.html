@@ -9,7 +9,7 @@
 <body>
     <header>
         <h1>Fortnite Droid Tycoon Helper</h1>
-        <p class="subtitle">Indica tu ciclo y renacer actual para ver en qué renaceres futuros necesitarás el droide y cuánto costará mejorarlo.</p>
+        <p class="subtitle">Indica tu ciclo, renacer y droide (puedes filtrar antes por Rareza y Clase) para ver en qué renaceres futuros lo necesitarás y cuánto costará mejorarlo.</p>
     </header>
 
     <main>
@@ -30,6 +30,20 @@
             </div>
 
             <div class="field">
+                <label for="rareza">Rareza (opcional)</label>
+                <select id="rareza-select">
+                    <option value="">-- Todas --</option>
+                </select>
+            </div>
+
+            <div class="field">
+                <label for="clase">Clase (opcional)</label>
+                <select id="clase">
+                    <option value="">-- Todas --</option>
+                </select>
+            </div>
+
+            <div class="field">
                 <label for="droide">Droide</label>
                 <select id="droide">
                     <option value="">-- Cargando droides... --</option>
@@ -37,8 +51,8 @@
             </div>
 
             <div class="field">
-                <label for="rareza">Rareza actual</label>
-                <select id="rareza">
+                <label for="calidad">Calidad actual</label>
+                <select id="calidad">
                     <option value="DEFAULT">DEFAULT</option>
                     <option value="GOLD">GOLD</option>
                     <option value="DIAMOND">DIAMOND</option>
@@ -60,7 +74,7 @@
                             <th>Ciclo</th>
                             <th>Renacer</th>
                             <th>Créditos</th>
-                            <th>Rareza necesaria</th>
+                            <th>Calidad necesaria</th>
                             <th>Slot</th>
                         </tr>
                     </thead>
@@ -71,7 +85,7 @@
             <div class="card cost-card">
                 <h2>Coste de mejora</h2>
                 <p id="cost-summary"></p>
-                <table id="cost-breakdown">
+                <table id="cost-breakdown" class="hidden">
                     <thead>
                         <tr>
                             <th>De</th>

@@ -7,6 +7,16 @@
 
 Aplicación para saber dónde se necesitará un droide a partir del renacer actual del jugador y, en su caso, cuánto costaría actualizarlo en chips. El juego consiste en una serie de renaceres y super renaceres. Tras los super renaceres se cambia de ciclo (1 → 2 → 3 → 4).
 
+### Terminología del juego
+
+Los droides se dividen por **Rareza** (nivel base y probabilidad de aparición), **Clase** (tipo de función) y **Calidad** (etapa de mejora de rendimiento). Denominaciones oficiales:
+
+- **Rareza**: `Common`, `Rare`, `Epic`, `Legendary`, `Mythic`, `Iconic`.
+- **Calidad**: `Default`, `Gold`, `Diamond`, `Rainbow`, `Beskar`, `Galactic`.
+- **Clase**: `Worker` (Trabajadores), `Astromech` (Astromecánicos), `Battle` (Combate).
+
+En la UI y en el código se usan los términos **Rareza**, **Clase** y **Calidad** de forma consistente. **No** mezclar ni usar "rareza" para designar lo que el juego llama "calidad", ni "tipo" para lo que el juego llama "clase".
+
 ## Stack tecnológico
 
 - **Frontend**: HTML + CSS + JavaScript vanilla (sin frameworks).
@@ -18,40 +28,44 @@ Aplicación para saber dónde se necesitará un droide a partir del renacer actu
 
 El sistema lee los siguientes CSVs:
 
-- **droids.csv** — `Rarity,Nombre,Tipo`. La rareza puede tener espacios al final (caso `ICONIC `); siempre hacer `trim()`.
-- **upgrade_chips.csv** — Cabecera `Rarity,Gold,Diamond,Rainbow,Beskar,Galactic`. Cada columna es el coste para pasar de la rareza anterior a la indicada.
-  - Mapeo de rareza de droids.csv → clave de upgrade_chips.csv:
+- **droids.csv** — `Rarity,Nombre,Clase`. La rareza puede tener espacios al final (caso `ICONIC `); siempre hacer `trim()`.
+  - Columna 1 = **Rareza** (Common, Rare, Epic, Legendary, Mythic, Iconic).
+  - Columna 3 = **Clase** (Worker, Astromech, Battle).
+- **upgrade_chips.csv** — Cabecera `Rarity,Gold,Diamond,Rainbow,Beskar,Galactic`. Cada columna es el coste en chips para pasar de la calidad anterior a la indicada.
+  - Mapeo de **rareza** de droids.csv → clave de upgrade_chips.csv:
     - `COMMON` → `Common`
     - `RARE` → `Rare`
     - `EPIC` → `Epic`
     - `LEGENDARY` → `Legend` (ojo, no `Legendary`)
     - `MYTHIC` → `Mythic`
     - `ICONIC` → sin entrada (no hay tabla de mejoras, el coste se mostrará como "no disponible")
-- **renaceres_ciclo_1.csv** … **renaceres_ciclo_4.csv** — Columnas: `ciclo,renacer,creditos,droide_1,droide_2,droide_3`. Cada `droide_X` tiene formato `RARIDAD NOMBRE` (p. ej. `GOLD PROTO-ROLLER`). Para comparar por nombre hay que partir por el primer espacio; nunca buscar subcadena (`MOUSE` no debe matchear `SNOW MOUSE`).
+- **renaceres_ciclo_1.csv** … **renaceres_ciclo_4.csv** — Columnas: `ciclo,renacer,creditos,droide_1,droide_2,droide_3`. Cada `droide_X` tiene formato `CALIDAD NOMBRE` (p. ej. `GOLD PROTO-ROLLER`). Para comparar por nombre hay que partir por el primer espacio; nunca buscar subcadena (`MOUSE` no debe matchear `SNOW MOUSE`).
 
 ## Funcionamiento de la UI
 
-El usuario selecciona cuatro campos y pulsa **Buscar**:
+El usuario selecciona seis campos y pulsa **Buscar**:
 
 1. **Ciclo** (obligatorio, 1–4). No existe opción "Todos": la búsqueda debe hacerse **siempre dentro de un ciclo**.
 2. **Renacer actual** (obligatorio, 1–30). Representa el renacer en el que está el jugador. **No existe opción "Todos"**: la búsqueda muestra los renaceres **a partir del seleccionado** (`renacer >= renacerActual`).
-3. **Droide** (obligatorio): desplegable con todos los droides únicos de `droids.csv`, ordenados alfabéticamente.
-4. **Rareza actual** (obligatorio): `DEFAULT`, `GOLD`, `DIAMOND`, `RAINBOW`, `BESKAR`. **Se usa SOLO para calcular el coste de mejora; nunca filtra los resultados.**
+3. **Rareza** (opcional): desplegable `#rareza-select` con las rarezas únicas presentes en `droids.csv` columna 1 (`COMMON`, `RARE`, `EPIC`, `LEGENDARY`, `MYTHIC`, `ICONIC`, etc.). La lista se deriva dinámicamente de `droids.csv` para que se actualice sola si en el futuro aparecen nuevas rarezas. Por defecto `-- Todas --` (sin filtro).
+4. **Clase** (opcional): desplegable `#clase` con las clases únicas presentes en `droids.csv` columna 3 (`WORKER`, `ASTROMECH`, `BATTLE`, etc.). También derivado dinámicamente. Por defecto `-- Todas --` (sin filtro).
+5. **Droide** (obligatorio): desplegable con los droides únicos de `droids.csv` ordenados alfabéticamente. **Se filtra en vivo** según los valores de Rareza y Clase: si ambos están en "Todas" muestra todos; si solo uno está fijado, lista solo los droides que coinciden con ese criterio; si ambos están fijados, lista los droides que cumplen ambos. Si no hay coincidencias, el desplegable muestra `-- Ningún droide coincide --` y el botón **Buscar** no permitirá avanzar sin selección.
+6. **Calidad actual** (obligatorio): desplegable `#calidad` con `DEFAULT`, `GOLD`, `DIAMOND`, `RAINBOW`, `BESKAR`. **Se usa SOLO para calcular el coste de mejora; nunca filtra los resultados.**
 
 Tras pulsar **Buscar** se muestran dos paneles, en este orden:
 
 ### Panel 1 — Renaceres donde se necesita el droide
-Tabla con una fila por coincidencia: `Ciclo`, `Renacer`, `Créditos`, `Rareza necesaria` (con badge de color), `Slot` (1, 2 o 3).
+Tabla con una fila por coincidencia: `Ciclo`, `Renacer`, `Créditos`, `Calidad necesaria` (con badge de color), `Slot` (1, 2 o 3).
 
 - Se listan todos los renaceres del ciclo seleccionado con `renacer >= renacerActual` en los que el droide aparece en cualquiera de los tres slots.
-- La **rareza máxima necesaria** se calcula como la rareza más alta entre todas las coincidencias.
+- La **calidad máxima necesaria** se calcula como la calidad más alta entre todas las coincidencias.
 
 ### Panel 2 — Coste de mejora
-- Suma los pasos necesarios para pasar de `rarezaActual` a `rarezaMaxima` consultando `upgrade_chips.csv`.
-- Ejemplo (de las instrucciones originales): droide `EPIC` en `GOLD` con máxima necesaria `BESKAR` → 180 + 240 + 3000 = **3420 chips**.
-- Si `rarezaActual >= rarezaMaxima` → coste **0 chips**, mensaje informativo.
-- Si el droide es `ICONIC` (sin fila en `upgrade_chips.csv`) → mensaje "no hay tabla de mejoras disponible".
-- Tabla desglose con filas `De | A | Coste` por cada salto de rareza.
+- Suma los pasos necesarios para pasar de `calidadActual` a `calidadMaxima` consultando `upgrade_chips.csv`.
+- Ejemplo (de las instrucciones originales): droide `EPIC` en `GOLD` con calidad máxima necesaria `BESKAR` → 180 + 240 + 3000 = **3420 chips**.
+- Si `calidadActual >= calidadMaxima` → coste **0 chips**, mensaje informativo. **En este caso la tabla de desglose se oculta**, no se muestra la cabecera vacía.
+- Si la rareza del droide es `ICONIC` (sin fila en `upgrade_chips.csv`) → mensaje "no hay tabla de mejoras disponible" y la tabla de desglose también permanece oculta.
+- Tabla desglose con filas `De | A | Coste` por cada salto de calidad (solo si hay pasos que mostrar).
 
 ## Despliegue y acceso en red local
 
@@ -82,12 +96,12 @@ Tabla con una fila por coincidencia: `Ciclo`, `Renacer`, `Créditos`, `Rareza ne
 
 - **Servidor silencioso**: `handle()` captura `OSError` (cubre `ConnectionResetError`, `ConnectionAbortedError`, `BrokenPipeError`) para no ensuciar la consola cuando un cliente cierra la conexión a mitad de petición.
 - **Parser CSV propio**: maneja comillas dobles; las celdas se trimean al insertar.
-- **Orden de rareza**: `DEFAULT < GOLD < DIAMOND < RAINBOW < BESKAR < GALACTIC` (vector `RARITY_ORDER`).
-- **Estructura de datos**: `rebirths = [{ciclo, renacer, creditos, droid1, droid2, droid3}]` para los 4 ciclos combinados; `upgradeCosts = {Common: {GOLD, DIAMOND, ...}, ...}`.
+- **Orden de calidad**: `DEFAULT < GOLD < DIAMOND < RAINBOW < BESKAR < GALACTIC` (vector `QUALITY_ORDER`, alias interno `RARITY_ORDER` para la lógica de cálculo).
+- **Estructura de datos**: `rebirths = [{ciclo, renacer, creditos, droid1, droid2, droid3}]` para los 4 ciclos combinados; `upgradeCosts = {Common: {GOLD, DIAMOND, ...}, ...}`; `droidNameToMeta = {NOMBRE: {rarity, class}}` para el filtrado en vivo de Rareza/Clase.
 - **Droids sin fila de upgrade**: ICONIC. El panel de coste lo indica pero el de renaceres funciona normal.
 
 ## Convenciones
 
 - HTML en `index.html`, CSS en `style.css`, lógica en `script.js`. Sin TypeScript, sin bundlers, sin npm.
 - Sin comentarios en el código salvo que se pidan explícitamente.
-- Idioma de la UI: español. Badges de rareza con colores distintivos (DEFAULT gris, GOLD dorado, DIAMOND celeste, RAINBOW degradado, BESKAR gris oscuro, GALACTIC morado/rosa).
+- Idioma de la UI: español. Badges de calidad con colores distintivos (DEFAULT gris, GOLD dorado, DIAMOND celeste, RAINBOW degradado, BESKAR gris oscuro, GALACTIC morado/rosa).
