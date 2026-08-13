@@ -67,6 +67,12 @@ Tabla con una fila por coincidencia: `Ciclo`, `Renacer`, `Créditos`, `Calidad n
 - Si la rareza del droide es `ICONIC` (sin fila en `upgrade_chips.csv`) → mensaje "no hay tabla de mejoras disponible" y la tabla de desglose también permanece oculta.
 - Tabla desglose con filas `De | A | Coste` por cada salto de calidad (solo si hay pasos que mostrar).
 
+### Modal de costes de rareza
+- Junto al botón **Buscar** aparece un segundo botón **Ver costes de rareza** (`#ver-costes`).
+- Al pulsarlo se abre una modal (`#cost-modal`) con una tabla que muestra el contenido íntegro de `upgrade_chips.csv`: filas = cada rareza base (`Common`, `Rare`, `Epic`, `Legend`, `Mythic`); columnas = `Gold`, `Diamond`, `Rainbow`, `Beskar`, `Galactic` con los chips necesarios para subir de la rareza anterior a la indicada.
+- La modal se cierra con la `×` (`#cost-modal-close`), haciendo clic fuera del cuadro o pulsando `Escape`.
+- La modal vuelve a renderizarse cada vez que se abre, de modo que refleja siempre la última versión del CSV tras un F5.
+
 ## Despliegue y acceso en red local
 
 1. Doble clic en **`start.bat`** (pide UAC una vez). Añade la regla de firewall `FortniteDroidTycoonHelper` y arranca el servidor.

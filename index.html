@@ -62,6 +62,7 @@
             </div>
 
             <button id="buscar" type="button">Buscar</button>
+            <button id="ver-costes" type="button">Ver costes de rareza</button>
         </section>
 
         <section id="results" class="results hidden">
@@ -103,6 +104,29 @@
         </section>
 
         <section id="error" class="error hidden"></section>
+
+        <div id="cost-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="cost-modal-title">
+            <div class="modal-content">
+                <header class="modal-header">
+                    <h2 id="cost-modal-title">Costes de subida de rareza</h2>
+                    <button id="cost-modal-close" type="button" class="modal-close" aria-label="Cerrar">&times;</button>
+                </header>
+                <p class="modal-subtitle">Coste en chips para llevar a un droide de una rareza a la siguiente. Filas = rareza base; columnas = calidad objetivo.</p>
+                <table id="cost-modal-table">
+                    <thead>
+                        <tr>
+                            <th>Rareza</th>
+                            <th>Gold</th>
+                            <th>Diamond</th>
+                            <th>Rainbow</th>
+                            <th>Beskar</th>
+                            <th>Galactic</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
     </main>
 
     <script src="script.js"></script>

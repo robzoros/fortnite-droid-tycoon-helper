@@ -330,6 +330,30 @@ function showError(msg) {
     errorSection.classList.remove('hidden');
 }
 
+function renderCostModalTable() {
+    const tbody = document.querySelector('#cost-modal-table tbody');
+    tbody.innerHTML = '';
+    const headers = ['Gold', 'Diamond', 'Rainbow', 'Beskar', 'Galactic'];
+    const rarityOrder = ['Common', 'Rare', 'Epic', 'Legend', 'Mythic'];
+    for (const rarity of rarityOrder) {
+        const row = upgradeCosts[rarity];
+        if (!row) continue;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<th>${rarity}</th>` +
+            headers.map(h => `<td>${row[h.toUpperCase()].toLocaleString('es-ES')}</td>`).join('');
+        tbody.appendChild(tr);
+    }
+}
+
+function openCostModal() {
+    renderCostModalTable();
+    document.getElementById('cost-modal').classList.remove('hidden');
+}
+
+function closeCostModal() {
+    document.getElementById('cost-modal').classList.add('hidden');
+}
+
 async function init() {
     initRenacerDropdown();
 
@@ -393,6 +417,15 @@ async function init() {
 
         const { results, maxRarity } = findRebirths(droide, ciclo, renacer);
         renderResults(results, maxRarity, droide, calidad);
+    });
+
+    document.getElementById('ver-costes').addEventListener('click', openCostModal);
+    document.getElementById('cost-modal-close').addEventListener('click', closeCostModal);
+    document.getElementById('cost-modal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeCostModal();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeCostModal();
     });
 }
 
