@@ -40,6 +40,7 @@ El sistema lee los siguientes CSVs:
     - `MYTHIC` → `Mythic`
     - `ICONIC` → sin entrada (no hay tabla de mejoras, el coste se mostrará como "no disponible")
 - **renaceres_ciclo_1.csv** … **renaceres_ciclo_4.csv** — Columnas: `ciclo,renacer,creditos,droide_1,droide_2,droide_3`. Cada `droide_X` tiene formato `CALIDAD NOMBRE` (p. ej. `GOLD PROTO-ROLLER`). Para comparar por nombre hay que partir por el primer espacio; nunca buscar subcadena (`MOUSE` no debe matchear `SNOW MOUSE`).
+- **images_droids.csv** — Cabecera `nombre,calidad,fichero`. Relaciona cada `nombre`+`calidad` con su fichero de imagen en `resources/` (patrón original `NOMBRE_RAREZA.webp`, con `_` en lugar de espacios). Sirve para resolver la imagen y el color de calidad del droide en el panel Restantes. No confundir con rareza.
 
 ## Funcionamiento de la UI
 
@@ -52,20 +53,38 @@ El usuario selecciona seis campos y pulsa **Buscar**:
 5. **Droide** (obligatorio): desplegable con los droides únicos de `droids.csv` ordenados alfabéticamente. **Se filtra en vivo** según los valores de Rareza y Clase: si ambos están en "Todas" muestra todos; si solo uno está fijado, lista solo los droides que coinciden con ese criterio; si ambos están fijados, lista los droides que cumplen ambos. Si no hay coincidencias, el desplegable muestra `-- Ningún droide coincide --` y el botón **Buscar** no permitirá avanzar sin selección.
 6. **Calidad actual** (obligatorio): desplegable `#calidad` con `DEFAULT`, `GOLD`, `DIAMOND`, `RAINBOW`, `BESKAR`. **Se usa SOLO para calcular el coste de mejora; nunca filtra los resultados.**
 
-Tras pulsar **Buscar** se muestran dos paneles, en este orden:
+Tras pulsar **Buscar** se muestran tres pestañas debajo, en este orden:
 
-### Panel 1 — Renaceres donde se necesita el droide
+- **Necesario** — renaceres donde aparece el droide buscado.
+- **Coste** — coste de mejora y desglose.
+- **Restantes** — renaceres superiores al actual.
+
+### Pestaña Necesario
 Tabla con una fila por coincidencia: `Ciclo`, `Renacer`, `Créditos`, `Calidad necesaria` (con badge de color), `Slot` (1, 2 o 3).
 
 - Se listan todos los renaceres del ciclo seleccionado con `renacer >= renacerActual` en los que el droide aparece en cualquiera de los tres slots.
 - La **calidad máxima necesaria** se calcula como la calidad más alta entre todas las coincidencias.
 
-### Panel 2 — Coste de mejora
+### Pestaña Coste
 - Suma los pasos necesarios para pasar de `calidadActual` a `calidadMaxima` consultando `upgrade_chips.csv`.
 - Ejemplo (de las instrucciones originales): droide `EPIC` en `GOLD` con calidad máxima necesaria `BESKAR` → 180 + 240 + 3000 = **3420 chips**.
 - Si `calidadActual >= calidadMaxima` → coste **0 chips**, mensaje informativo. **En este caso la tabla de desglose se oculta**, no se muestra la cabecera vacía.
 - Si la rareza del droide es `ICONIC` (sin fila en `upgrade_chips.csv`) → mensaje "no hay tabla de mejoras disponible" y la tabla de desglose también permanece oculta.
 - Tabla desglose con filas `De | A | Coste` por cada salto de calidad (solo si hay pasos que mostrar).
+
+### Pestaña Restantes
+- Lista los renaceres del **mismo ciclo** con `renacer > renacerActual` (uno por fila).
+- Columnas: `Renacer | Droide 1 | Droide 2 | Droide 3`.
+- Cada celda de droide muestra la imagen desde `resources/<fichero>` (resuelta vía `images_droids.csv`), debajo el **nombre del droide** coloreado con el color de su **rareza** y, bajo el nombre, el badge de **calidad** necesaria.
+- Colores por rareza (RGB) del nombre:
+  - `COMMON` → verde `(0, 192, 73)`
+  - `RARE` → azul `(0, 115, 230)`
+  - `EPIC` → morado/púrpura `(163, 53, 238)`
+  - `LEGENDARY` → naranja `(235, 117, 10)`
+  - `MYTHIC` → rojo `(226, 45, 45)`
+  - `ICONIC` → rosa `(211, 46, 172)`
+- Si no existe imagen para esa combinación nombre+calidad se oculta el `<img>` y se mantienen nombre y badge.
+- Si no quedan renaceres en el ciclo, se muestra el mensaje "No quedan renaceres superiores en este ciclo.".
 
 ### Modal de costes de rareza
 - Junto al botón **Buscar** aparece un segundo botón **Ver costes de rareza** (`#ver-costes`).
@@ -103,7 +122,7 @@ Tabla con una fila por coincidencia: `Ciclo`, `Renacer`, `Créditos`, `Calidad n
 - **Servidor silencioso**: `handle()` captura `OSError` (cubre `ConnectionResetError`, `ConnectionAbortedError`, `BrokenPipeError`) para no ensuciar la consola cuando un cliente cierra la conexión a mitad de petición.
 - **Parser CSV propio**: maneja comillas dobles; las celdas se trimean al insertar.
 - **Orden de calidad**: `DEFAULT < GOLD < DIAMOND < RAINBOW < BESKAR < GALACTIC` (vector `QUALITY_ORDER`, alias interno `RARITY_ORDER` para la lógica de cálculo).
-- **Estructura de datos**: `rebirths = [{ciclo, renacer, creditos, droid1, droid2, droid3}]` para los 4 ciclos combinados; `upgradeCosts = {Common: {GOLD, DIAMOND, ...}, ...}`; `droidNameToMeta = {NOMBRE: {rarity, class}}` para el filtrado en vivo de Rareza/Clase.
+- **Estructura de datos**: `rebirths = [{ciclo, renacer, creditos, droid1, droid2, droid3}]` para los 4 ciclos combinados; `upgradeCosts = {Common: {GOLD, DIAMOND, ...}, ...}`; `droidNameToMeta = {NOMBRE: {rarity, class}}` para el filtrado en vivo de Rareza/Clase; `imageLookup = {NOMBRE: {CALIDAD: fichero}}` para resolver imágenes del panel Restantes.
 - **Droids sin fila de upgrade**: ICONIC. El panel de coste lo indica pero el de renaceres funciona normal.
 
 ## Convenciones

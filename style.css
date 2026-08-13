@@ -158,6 +158,110 @@ tbody tr:hover {
 .rarity-BESKAR { background: #6c757d; color: #fff; }
 .rarity-GALACTIC { background: linear-gradient(135deg, #8a2be2, #ff1493); color: #fff; }
 
+.name-COMMON { color: rgb(0, 192, 73); }
+.name-RARE { color: rgb(0, 115, 230); }
+.name-EPIC { color: rgb(163, 53, 238); }
+.name-LEGENDARY { color: rgb(235, 117, 10); }
+.name-MYTHIC { color: rgb(226, 45, 45); }
+.name-ICONIC { color: rgb(211, 46, 172); }
+
+.tabs {
+    display: flex;
+    gap: 0.4rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.tab {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #b0b0c0;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    align-self: auto;
+}
+
+.tab:hover {
+    color: #f0f0f0;
+    border-color: #4ecdc4;
+    transform: none;
+    box-shadow: none;
+}
+
+.tab.active {
+    background: linear-gradient(135deg, #4ecdc4, #44a08d);
+    color: #fff;
+    border-color: transparent;
+}
+
+.tab-panel.hidden {
+    display: none;
+}
+
+.droid-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.4rem;
+    text-align: center;
+    min-width: 0;
+}
+
+.droid-cell img {
+    width: 56px;
+    height: 56px;
+    object-fit: contain;
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.25);
+    padding: 4px;
+}
+
+.droid-cell .droid-name {
+    font-weight: 600;
+    font-size: 0.8rem;
+    line-height: 1.15;
+    word-break: break-word;
+    max-width: 100%;
+}
+
+.droid-cell .droid-quality {
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+}
+
+#remaining-table {
+    table-layout: fixed;
+}
+
+#remaining-table th,
+#remaining-table td {
+    text-align: center;
+    vertical-align: top;
+    padding: 0.3rem;
+}
+
+#remaining-table th:first-child,
+#remaining-table td:first-child {
+    text-align: center;
+    width: 70px;
+    font-weight: bold;
+    color: #4ecdc4;
+}
+
+#remaining-table th:nth-child(2),
+#remaining-table th:nth-child(3),
+#remaining-table th:nth-child(4) {
+    width: auto;
+}
+
+#remaining-table tbody td {
+    overflow: hidden;
+}
+
 .empty {
     text-align: center;
     padding: 2rem;
@@ -191,6 +295,28 @@ footer {
     header h1 { font-size: 1.6rem; }
     .filters { grid-template-columns: 1fr; }
     th, td { padding: 0.4rem; font-size: 0.85rem; }
+
+    body { padding: 0.5rem; }
+    .filters { padding: 1rem; }
+
+    .droid-cell img { width: 44px; height: 44px; }
+    .droid-cell .droid-name { font-size: 0.72rem; }
+    .droid-cell .droid-quality { font-size: 0.62rem; }
+    .droid-cell .rarity { font-size: 0.7rem; padding: 0.1rem 0.3rem; }
+
+    #remaining-table th,
+    #remaining-table td { padding: 0.2rem; }
+    #remaining-table th:first-child,
+    #remaining-table td:first-child { width: 56px; font-size: 0.75rem; }
+
+    .tabs { gap: 0.3rem; }
+    .tab { padding: 0.4rem 0.7rem; font-size: 0.9rem; }
+
+    .card { padding: 1rem; }
+    .card h2 { font-size: 1.1rem; }
+    #cost-summary { font-size: 0.9rem; }
+
+    button[type="button"] { padding: 0.6rem 0.8rem; font-size: 0.95rem; }
 }
 
 .modal {

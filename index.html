@@ -58,6 +58,7 @@
                     <option value="DIAMOND">DIAMOND</option>
                     <option value="RAINBOW">RAINBOW</option>
                     <option value="BESKAR">BESKAR</option>
+                    <option value="GALACTIC">GALACTIC</option>
                 </select>
             </div>
 
@@ -66,7 +67,13 @@
         </section>
 
         <section id="results" class="results hidden">
-            <div class="card rebirths-card">
+            <div class="tabs" role="tablist">
+                <button id="tab-necesario" class="tab active" role="tab" aria-selected="true" aria-controls="panel-necesario">Necesario</button>
+                <button id="tab-coste" class="tab" role="tab" aria-selected="false" aria-controls="panel-coste">Coste</button>
+                <button id="tab-restantes" class="tab" role="tab" aria-selected="false" aria-controls="panel-restantes">Restantes</button>
+            </div>
+
+            <div id="panel-necesario" class="card tab-panel" role="tabpanel" aria-labelledby="tab-necesario">
                 <h2>Renaceres donde se necesita el droide</h2>
                 <p id="rebirths-count"></p>
                 <table id="rebirths-table">
@@ -83,7 +90,7 @@
                 </table>
             </div>
 
-            <div class="card cost-card">
+            <div id="panel-coste" class="card tab-panel hidden" role="tabpanel" aria-labelledby="tab-coste">
                 <h2>Coste de mejora</h2>
                 <p id="cost-summary"></p>
                 <table id="cost-breakdown" class="hidden">
@@ -92,6 +99,22 @@
                             <th>De</th>
                             <th>A</th>
                             <th>Coste (chips)</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <div id="panel-restantes" class="card tab-panel hidden" role="tabpanel" aria-labelledby="tab-restantes">
+                <h2>Renaceres restantes del ciclo</h2>
+                <p id="remaining-count"></p>
+                <table id="remaining-table">
+                    <thead>
+                        <tr>
+                            <th>Renacer</th>
+                            <th>Droide 1</th>
+                            <th>Droide 2</th>
+                            <th>Droide 3</th>
                         </tr>
                     </thead>
                     <tbody></tbody>

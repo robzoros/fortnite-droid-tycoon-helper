@@ -11,10 +11,14 @@ const RARITY_TO_UPGRADE_KEY = {
 
 const QUALITY_ORDER = ['DEFAULT', 'GOLD', 'DIAMOND', 'RAINBOW', 'BESKAR', 'GALACTIC'];
 
+const RARITY_DISPLAY_ORDER = ['COMMON', 'RARE', 'EPIC', 'LEGENDARY', 'MYTHIC', 'ICONIC'];
+
 let upgradeCosts = {};
 let rebirths = [];
 let droidTaxonomy = { rarities: [], classes: [] };
 let droidNameToMeta = {};
+let imageLookup = {};
+let lastResults = null;
 
 async function fetchText(path) {
     const res = await fetch(path);
@@ -45,7 +49,6 @@ function parseCSV(text) {
 }
 
 function loadUpgradeCosts(rows) {
-    const headers = rows[0];
     const costs = {};
     for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
@@ -63,9 +66,8 @@ function loadUpgradeCosts(rows) {
 
 function loadDroids(rows) {
     const droids = new Set();
-    for (let i = 1; i < rows.length; i++) {
-        const rarity = rows[i][0].trim();
-        const name = rows[i][1].trim();
+    for (let i = 0; i < rows.length; i++) {
+        const name = rows[i][1] ? rows[i][1].trim() : '';
         if (name) droids.add(name);
     }
     return Array.from(droids).sort((a, b) => a.localeCompare(b));
@@ -74,16 +76,31 @@ function loadDroids(rows) {
 function loadDroidTaxonomy(rows) {
     const rarities = new Set();
     const classes = new Set();
-    for (let i = 1; i < rows.length; i++) {
-        const rarity = rows[i][0].trim();
+    for (let i = 0; i < rows.length; i++) {
+        const rarity = rows[i][0] ? rows[i][0].trim() : '';
         const cls = rows[i][2] ? rows[i][2].trim() : '';
         if (rarity) rarities.add(rarity);
         if (cls) classes.add(cls);
     }
+    const orderedRarities = RARITY_DISPLAY_ORDER.filter(r => rarities.has(r))
+        .concat(Array.from(rarities).filter(r => !RARITY_DISPLAY_ORDER.includes(r)).sort((a, b) => a.localeCompare(b)));
     return {
-        rarities: Array.from(rarities).sort((a, b) => a.localeCompare(b)),
+        rarities: orderedRarities,
         classes: Array.from(classes).sort((a, b) => a.localeCompare(b)),
     };
+}
+
+function loadImageLookup(rows) {
+    const lookup = {};
+    for (let i = 1; i < rows.length; i++) {
+        const name = rows[i][0] ? rows[i][0].trim().toUpperCase() : '';
+        const quality = rows[i][1] ? rows[i][1].trim().toUpperCase() : '';
+        const file = rows[i][2] ? rows[i][2].trim() : '';
+        if (!name || !quality || !file) continue;
+        if (!lookup[name]) lookup[name] = {};
+        lookup[name][quality] = file;
+    }
+    return lookup;
 }
 
 function loadRebirths(rows, ciclo) {
@@ -212,23 +229,71 @@ function findRebirths(droidName, cicloFilter, renacerFilter) {
     return { results, maxRarity };
 }
 
+function findRemainingRebirths(cicloFilter, renacerFilter) {
+    const fromRenacer = parseInt(renacerFilter, 10);
+    const remaining = [];
+    for (const rb of rebirths) {
+        if (String(rb.ciclo) !== cicloFilter) continue;
+        if (rb.renacer <= fromRenacer) continue;
+        remaining.push({
+            renacer: rb.renacer,
+            droid1: rb.droid1,
+            droid2: rb.droid2,
+            droid3: rb.droid3,
+        });
+    }
+    remaining.sort((a, b) => a.renacer - b.renacer);
+    return remaining;
+}
+
 function rarityBadge(rarity) {
     return `<span class="rarity rarity-${rarity}">${rarity}</span>`;
 }
 
-function renderResults(rebirthResults, maxRarity, droidName, currentRarity) {
+function escapeHtml(str) {
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function renderDroidCell(cell) {
+    const parsed = parseDroidCell(cell);
+    const meta = droidNameToMeta[parsed.name.toUpperCase()] || {};
+    const baseRarity = meta.rarity || 'COMMON';
+    const rarityClass = `name-${baseRarity}`;
+    const lookup = imageLookup[parsed.name.toUpperCase()];
+    const file = lookup && parsed.rarity ? lookup[parsed.rarity] : null;
+    const imgHtml = file
+        ? `<img src="resources/${escapeHtml(file)}" alt="${escapeHtml(parsed.name)}" loading="lazy">`
+        : `<img src="" alt="${escapeHtml(parsed.name)}" hidden>`;
+    const qualityHtml = parsed.rarity ? rarityBadge(parsed.rarity) : '';
+    return `
+        <div class="droid-cell">
+            ${imgHtml}
+            <span class="droid-name ${rarityClass}">${escapeHtml(parsed.name)}</span>
+            <span class="droid-quality">${qualityHtml}</span>
+        </div>
+    `;
+}
+
+function renderResults(payload) {
+    const { rebirthResults, maxRarity, droidName, currentRarity, remaining } = payload;
+
     const resultsSection = document.getElementById('results');
     const emptySection = document.getElementById('empty');
     const errorSection = document.getElementById('error');
     errorSection.classList.add('hidden');
     errorSection.textContent = '';
 
-    if (rebirthResults.length === 0) {
+    if (rebirthResults.length === 0 && remaining.length === 0) {
         resultsSection.classList.add('hidden');
         emptySection.classList.remove('hidden');
         const renacerVal = document.getElementById('renacer').value;
-        let msg = `No se han encontrado renaceres para ${droidName} a partir del renacer ${renacerVal} en este ciclo.`;
-        emptySection.querySelector('p').textContent = msg;
+        emptySection.querySelector('p').textContent =
+            `No se han encontrado renaceres para ${droidName} a partir del renacer ${renacerVal} en este ciclo.`;
         return;
     }
     emptySection.classList.add('hidden');
@@ -245,13 +310,13 @@ function renderResults(rebirthResults, maxRarity, droidName, currentRarity) {
     breakdownTable.classList.add('hidden');
 
     if (!upgradeRow) {
-        summary.innerHTML = `Tu droide <strong>${droidName}</strong> necesita llegar a ${rarityBadge(maxRarity)}. No hay tabla de mejoras disponible para esta rareza base.`;
+        summary.innerHTML = `Tu droide <strong>${escapeHtml(droidName)}</strong> necesita llegar a ${rarityBadge(maxRarity)}. No hay tabla de mejoras disponible para esta rareza base.`;
     } else {
         const cost = computeUpgradeCost(upgradeRow, currentRarity, maxRarity);
         if (cost.total === 0) {
-            summary.innerHTML = `Tu droide <strong>${droidName}</strong> ya está en ${rarityBadge(currentRarity)}, que es igual o superior a la calidad máxima necesaria (${rarityBadge(maxRarity)}). <strong>0 chips</strong>.`;
+            summary.innerHTML = `Tu droide <strong>${escapeHtml(droidName)}</strong> ya está en ${rarityBadge(currentRarity)}, que es igual o superior a la calidad máxima necesaria (${rarityBadge(maxRarity)}). <strong>0 chips</strong>.`;
         } else {
-            summary.innerHTML = `Mejorar <strong>${droidName}</strong> de ${rarityBadge(currentRarity)} a ${rarityBadge(maxRarity)} cuesta <strong>${cost.total.toLocaleString('es-ES')}</strong> chips.`;
+            summary.innerHTML = `Mejorar <strong>${escapeHtml(droidName)}</strong> de ${rarityBadge(currentRarity)} a ${rarityBadge(maxRarity)} cuesta <strong>${cost.total.toLocaleString('es-ES')}</strong> chips.`;
             for (const step of cost.steps) {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
@@ -282,7 +347,26 @@ function renderResults(rebirthResults, maxRarity, droidName, currentRarity) {
     }
 
     document.getElementById('rebirths-count').textContent =
-        `Se han encontrado ${rebirthResults.length} renacer(es) donde se necesita el droide.`;
+        rebirthResults.length === 0
+            ? 'No se han encontrado renaceres donde se necesite este droide.'
+            : `Se han encontrado ${rebirthResults.length} renacer(es) donde se necesita el droide.`;
+
+    const remainingBody = document.querySelector('#remaining-table tbody');
+    remainingBody.innerHTML = '';
+    for (const rb of remaining) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>Renacer ${rb.renacer}</td>
+            <td>${renderDroidCell(rb.droid1)}</td>
+            <td>${renderDroidCell(rb.droid2)}</td>
+            <td>${renderDroidCell(rb.droid3)}</td>
+        `;
+        remainingBody.appendChild(tr);
+    }
+    document.getElementById('remaining-count').textContent =
+        remaining.length === 0
+            ? 'No quedan renaceres superiores en este ciclo.'
+            : `Quedan ${remaining.length} renacer(es) por encima del actual en este ciclo.`;
 }
 
 function getDroidRarity(droidName) {
@@ -330,6 +414,22 @@ function showError(msg) {
     errorSection.classList.remove('hidden');
 }
 
+function activateTab(tabId) {
+    const tabs = [
+        { btn: 'tab-necesario', panel: 'panel-necesario' },
+        { btn: 'tab-coste', panel: 'panel-coste' },
+        { btn: 'tab-restantes', panel: 'panel-restantes' },
+    ];
+    for (const t of tabs) {
+        const btn = document.getElementById(t.btn);
+        const panel = document.getElementById(t.panel);
+        const isActive = t.btn === tabId;
+        btn.classList.toggle('active', isActive);
+        btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        panel.classList.toggle('hidden', !isActive);
+    }
+}
+
 function renderCostModalTable() {
     const tbody = document.querySelector('#cost-modal-table tbody');
     tbody.innerHTML = '';
@@ -358,9 +458,10 @@ async function init() {
     initRenacerDropdown();
 
     try {
-        const [droidsText, upgradesText, c1Text, c2Text, c3Text, c4Text] = await Promise.all([
+        const [droidsText, upgradesText, imagesText, c1Text, c2Text, c3Text, c4Text] = await Promise.all([
             fetchText('droids.csv'),
             fetchText('upgrade_chips.csv'),
+            fetchText('images_droids.csv'),
             fetchText('renaceres_ciclo_1.csv'),
             fetchText('renaceres_ciclo_2.csv'),
             fetchText('renaceres_ciclo_3.csv'),
@@ -369,8 +470,10 @@ async function init() {
 
         const droidsRows = parseCSV(droidsText);
         const upgradesRows = parseCSV(upgradesText);
+        const imagesRows = parseCSV(imagesText);
 
         upgradeCosts = loadUpgradeCosts(upgradesRows);
+        imageLookup = loadImageLookup(imagesRows);
 
         const droidNames = loadDroids(droidsRows);
         initDroidDropdown(droidNames);
@@ -381,9 +484,9 @@ async function init() {
 
         const qualityMap = {};
         droidNameToMeta = {};
-        for (let i = 1; droidsRows[i] && droidsRows[i].length > 0; i++) {
-            const rarity = droidsRows[i][0].trim();
-            const name = droidsRows[i][1].trim();
+        for (let i = 0; i < droidsRows.length; i++) {
+            const rarity = droidsRows[i][0] ? droidsRows[i][0].trim() : '';
+            const name = droidsRows[i][1] ? droidsRows[i][1].trim() : '';
             const cls = droidsRows[i][2] ? droidsRows[i][2].trim() : '';
             if (!name) continue;
             qualityMap[name.toUpperCase()] = rarity;
@@ -416,8 +519,16 @@ async function init() {
         const calidad = document.getElementById('calidad').value;
 
         const { results, maxRarity } = findRebirths(droide, ciclo, renacer);
-        renderResults(results, maxRarity, droide, calidad);
+        const remaining = findRemainingRebirths(ciclo, renacer);
+        const payload = { rebirthResults: results, maxRarity, droidName: droide, currentRarity: calidad, remaining };
+        lastResults = payload;
+        activateTab('tab-necesario');
+        renderResults(payload);
     });
+
+    document.getElementById('tab-necesario').addEventListener('click', () => activateTab('tab-necesario'));
+    document.getElementById('tab-coste').addEventListener('click', () => activateTab('tab-coste'));
+    document.getElementById('tab-restantes').addEventListener('click', () => activateTab('tab-restantes'));
 
     document.getElementById('ver-costes').addEventListener('click', openCostModal);
     document.getElementById('cost-modal-close').addEventListener('click', closeCostModal);
