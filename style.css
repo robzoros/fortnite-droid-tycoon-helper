@@ -32,6 +32,33 @@ header h1 {
     font-size: 1rem;
 }
 
+.top-menu {
+    display: flex;
+    justify-content: center;
+    gap: 0.8rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.menu-btn {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #f0f0f0;
+    font-weight: 600;
+    padding: 0.5rem 1.2rem;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    align-self: auto;
+}
+
+.menu-btn:hover {
+    border-color: #4ecdc4;
+    background: rgba(78, 205, 196, 0.15);
+    transform: none;
+    box-shadow: none;
+}
+
 main {
     max-width: 1100px;
     margin: 0 auto;
@@ -157,6 +184,7 @@ tbody tr:hover {
 .rarity-RAINBOW { background: linear-gradient(90deg, #ff6b6b, #ffd700, #4ecdc4, #b9f2ff); color: #fff; }
 .rarity-BESKAR { background: #6c757d; color: #fff; }
 .rarity-GALACTIC { background: linear-gradient(135deg, #8a2be2, #ff1493); color: #fff; }
+.rarity-STELLAR { background: linear-gradient(135deg, #ffffff, #7be0ff); color: #1b2a38; }
 
 .name-COMMON { color: rgb(0, 192, 73); }
 .name-RARE { color: rgb(0, 115, 230); }
@@ -233,6 +261,20 @@ tbody tr:hover {
     letter-spacing: 0.05em;
 }
 
+.droid-last {
+    margin-top: 0.15rem;
+    font-weight: 800;
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    color: #fff;
+    background: linear-gradient(135deg, #ff4d4d, #ff8c00);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 4px;
+    padding: 0.12rem 0.4rem;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 0 8px rgba(255, 77, 77, 0.5);
+}
+
 #remaining-table {
     table-layout: fixed;
 }
@@ -303,6 +345,7 @@ footer {
     .droid-cell .droid-name { font-size: 0.72rem; }
     .droid-cell .droid-quality { font-size: 0.62rem; }
     .droid-cell .rarity { font-size: 0.7rem; padding: 0.1rem 0.3rem; }
+    .droid-last { font-size: 0.6rem; padding: 0.1rem 0.3rem; }
 
     #remaining-table th,
     #remaining-table td { padding: 0.2rem; }
@@ -315,6 +358,12 @@ footer {
     .card { padding: 1rem; }
     .card h2 { font-size: 1.1rem; }
     #cost-summary { font-size: 0.9rem; }
+
+    .menu-btn { padding: 0.45rem 0.9rem; font-size: 0.9rem; }
+    .stat-cell img { width: 56px; height: 56px; }
+    .stat-cell span { font-size: 0.8rem; }
+    #super-rebirths-table th:first-child,
+    #super-rebirths-table td:first-child { width: 64px; font-size: 0.8rem; }
 
     button[type="button"] { padding: 0.6rem 0.8rem; font-size: 0.95rem; }
 }
@@ -389,4 +438,41 @@ footer {
     color: #ffd700;
     font-weight: bold;
     text-align: left;
+}
+
+#super-rebirths-table {
+    table-layout: fixed;
+}
+
+#super-rebirths-table th,
+#super-rebirths-table td {
+    text-align: center;
+    vertical-align: middle;
+}
+
+#super-rebirths-table th:first-child,
+#super-rebirths-table td:first-child {
+    width: 90px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #4ecdc4;
+    font-weight: bold;
+}
+
+.stat-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.3rem;
+}
+
+.stat-cell img {
+    width: 56px;
+    height: 56px;
+    object-fit: contain;
+}
+
+.stat-cell span {
+    font-weight: 600;
+    font-size: 0.9rem;
 }

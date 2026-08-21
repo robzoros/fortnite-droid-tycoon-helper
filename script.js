@@ -1,4 +1,4 @@
-const RARITY_ORDER = ['DEFAULT', 'GOLD', 'DIAMOND', 'RAINBOW', 'BESKAR', 'GALACTIC'];
+const RARITY_ORDER = ['DEFAULT', 'GOLD', 'DIAMOND', 'RAINBOW', 'BESKAR', 'GALACTIC', 'STELLAR'];
 
 const RARITY_TO_UPGRADE_KEY = {
     'COMMON': 'Common',
@@ -9,15 +9,18 @@ const RARITY_TO_UPGRADE_KEY = {
     'ICONIC': null,
 };
 
-const QUALITY_ORDER = ['DEFAULT', 'GOLD', 'DIAMOND', 'RAINBOW', 'BESKAR', 'GALACTIC'];
+const QUALITY_ORDER = ['DEFAULT', 'GOLD', 'DIAMOND', 'RAINBOW', 'BESKAR', 'GALACTIC', 'STELLAR'];
 
 const RARITY_DISPLAY_ORDER = ['COMMON', 'RARE', 'EPIC', 'LEGENDARY', 'MYTHIC', 'ICONIC'];
 
 let upgradeCosts = {};
+let upgradeQualityColumns = [];
+let upgradeRarityOrder = [];
 let rebirths = [];
 let droidTaxonomy = { rarities: [], classes: [] };
 let droidNameToMeta = {};
 let imageLookup = {};
+let superRebirths = [];
 let lastResults = null;
 
 async function fetchText(path) {
@@ -50,16 +53,19 @@ function parseCSV(text) {
 
 function loadUpgradeCosts(rows) {
     const costs = {};
+    const header = rows[0] || [];
+    upgradeQualityColumns = header.slice(1).map(q => q.trim().toUpperCase()).filter(Boolean);
+    upgradeRarityOrder = [];
     for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
         const rarityKey = row[0];
-        costs[rarityKey] = {
-            GOLD: parseInt(row[1], 10),
-            DIAMOND: parseInt(row[2], 10),
-            RAINBOW: parseInt(row[3], 10),
-            BESKAR: parseInt(row[4], 10),
-            GALACTIC: parseInt(row[5], 10),
-        };
+        if (!rarityKey) continue;
+        const entry = {};
+        for (let j = 0; j < upgradeQualityColumns.length; j++) {
+            entry[upgradeQualityColumns[j]] = parseInt(row[j + 1], 10);
+        }
+        costs[rarityKey] = entry;
+        upgradeRarityOrder.push(rarityKey);
     }
     return costs;
 }
@@ -119,6 +125,21 @@ function loadRebirths(rows, ciclo) {
     return data;
 }
 
+function loadSuperRebirths(rows) {
+    const data = [];
+    for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row || row.length < 4) continue;
+        data.push({
+            nivel: row[0],
+            cristales: row[1],
+            ingresos: row[2],
+            xp: row[3],
+        });
+    }
+    return data;
+}
+
 function parseDroidCell(value) {
     const trimmed = value.trim();
     const idx = trimmed.indexOf(' ');
@@ -151,9 +172,35 @@ function computeUpgradeCost(upgradeRow, fromRarity, toRarity) {
     return { total, steps };
 }
 
-function initRenacerDropdown() {
+async function fetchRebirthFiles() {
+    const texts = [];
+    for (let n = 1; ; n++) {
+        let res;
+        try {
+            res = await fetch(`renaceres_ciclo_${n}.csv`);
+        } catch (e) {
+            break;
+        }
+        if (!res.ok) break;
+        texts.push(await res.text());
+    }
+    return texts;
+}
+
+function initCicloDropdown(cycleCount) {
+    const select = document.getElementById('ciclo');
+    select.innerHTML = '';
+    for (let i = 1; i <= cycleCount; i++) {
+        const opt = document.createElement('option');
+        opt.value = String(i);
+        opt.textContent = `Ciclo ${i}`;
+        select.appendChild(opt);
+    }
+}
+
+function initRenacerDropdown(maxRenacer) {
     const select = document.getElementById('renacer');
-    for (let i = 1; i <= 30; i++) {
+    for (let i = 1; i <= maxRenacer; i++) {
         const opt = document.createElement('option');
         opt.value = String(i);
         opt.textContent = `Renacer ${i}`;
@@ -197,7 +244,7 @@ function findRebirths(droidName, cicloFilter, renacerFilter) {
     const fromRenacer = parseInt(renacerFilter, 10);
     for (const rb of rebirths) {
         if (String(rb.ciclo) !== cicloFilter) continue;
-        if (rb.renacer < fromRenacer) continue;
+        if (rb.renacer <= fromRenacer) continue;
 
         const slots = [
             { cell: rb.droid1, slot: 1 },
@@ -246,6 +293,22 @@ function findRemainingRebirths(cicloFilter, renacerFilter) {
     return remaining;
 }
 
+function buildLastAppearance(cicloFilter) {
+    const last = {};
+    for (const rb of rebirths) {
+        if (String(rb.ciclo) !== cicloFilter) continue;
+        for (const cell of [rb.droid1, rb.droid2, rb.droid3]) {
+            const parsed = parseDroidCell(cell);
+            if (!parsed.name) continue;
+            const key = parsed.name.toUpperCase();
+            if (last[key] === undefined || rb.renacer > last[key]) {
+                last[key] = rb.renacer;
+            }
+        }
+    }
+    return last;
+}
+
 function rarityBadge(rarity) {
     return `<span class="rarity rarity-${rarity}">${rarity}</span>`;
 }
@@ -259,22 +322,31 @@ function escapeHtml(str) {
         .replace(/'/g, '&#39;');
 }
 
-function renderDroidCell(cell) {
+function renderDroidCell(cell, renacer, lastAppearance) {
     const parsed = parseDroidCell(cell);
     const meta = droidNameToMeta[parsed.name.toUpperCase()] || {};
     const baseRarity = meta.rarity || 'COMMON';
     const rarityClass = `name-${baseRarity}`;
-    const lookup = imageLookup[parsed.name.toUpperCase()];
-    const file = lookup && parsed.rarity ? lookup[parsed.rarity] : null;
-    const imgHtml = file
-        ? `<img src="resources/${escapeHtml(file)}" alt="${escapeHtml(parsed.name)}" loading="lazy">`
-        : `<img src="" alt="${escapeHtml(parsed.name)}" hidden>`;
+    const lookup = imageLookup[parsed.name.toUpperCase()] || {};
+    let file = parsed.rarity ? lookup[parsed.rarity] : null;
+    if (!file && parsed.rarity === 'STELLAR') {
+        file = lookup['GOLD'];
+    }
+    if (!file) {
+        file = lookup['DEFAULT'];
+    }
+    const imgSrc = file ? `resources/${escapeHtml(file)}` : 'resources/Droidex-logo.PNG';
+    const imgHtml = `<img src="${imgSrc}" alt="${escapeHtml(parsed.name)}" loading="lazy">`;
     const qualityHtml = parsed.rarity ? rarityBadge(parsed.rarity) : '';
+    const nameKey = parsed.name.toUpperCase();
+    const isLast = lastAppearance && renacer !== undefined && lastAppearance[nameKey] === renacer;
+    const lastHtml = isLast ? `<span class="droid-last">ÚLTIMO</span>` : '';
     return `
         <div class="droid-cell">
             ${imgHtml}
             <span class="droid-name ${rarityClass}">${escapeHtml(parsed.name)}</span>
             <span class="droid-quality">${qualityHtml}</span>
+            ${lastHtml}
         </div>
     `;
 }
@@ -353,13 +425,14 @@ function renderResults(payload) {
 
     const remainingBody = document.querySelector('#remaining-table tbody');
     remainingBody.innerHTML = '';
+    const lastAppearance = buildLastAppearance(payload.ciclo);
     for (const rb of remaining) {
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>Renacer ${rb.renacer}</td>
-            <td>${renderDroidCell(rb.droid1)}</td>
-            <td>${renderDroidCell(rb.droid2)}</td>
-            <td>${renderDroidCell(rb.droid3)}</td>
+            <td>${renderDroidCell(rb.droid1, rb.renacer, lastAppearance)}</td>
+            <td>${renderDroidCell(rb.droid2, rb.renacer, lastAppearance)}</td>
+            <td>${renderDroidCell(rb.droid3, rb.renacer, lastAppearance)}</td>
         `;
         remainingBody.appendChild(tr);
     }
@@ -431,16 +504,22 @@ function activateTab(tabId) {
 }
 
 function renderCostModalTable() {
-    const tbody = document.querySelector('#cost-modal-table tbody');
+    const table = document.getElementById('cost-modal-table');
+    const thead = table.querySelector('thead');
+    const tbody = table.querySelector('tbody');
+    thead.innerHTML = '';
     tbody.innerHTML = '';
-    const headers = ['Gold', 'Diamond', 'Rainbow', 'Beskar', 'Galactic'];
-    const rarityOrder = ['Common', 'Rare', 'Epic', 'Legend', 'Mythic'];
-    for (const rarity of rarityOrder) {
+    const label = q => q.charAt(0) + q.slice(1).toLowerCase();
+    const headTr = document.createElement('tr');
+    headTr.innerHTML = '<th>Rareza</th>' +
+        upgradeQualityColumns.map(q => `<th>${escapeHtml(label(q))}</th>`).join('');
+    thead.appendChild(headTr);
+    for (const rarity of upgradeRarityOrder) {
         const row = upgradeCosts[rarity];
         if (!row) continue;
         const tr = document.createElement('tr');
-        tr.innerHTML = `<th>${rarity}</th>` +
-            headers.map(h => `<td>${row[h.toUpperCase()].toLocaleString('es-ES')}</td>`).join('');
+        tr.innerHTML = `<th>${escapeHtml(rarity)}</th>` +
+            upgradeQualityColumns.map(q => `<td>${row[q].toLocaleString('es-ES')}</td>`).join('');
         tbody.appendChild(tr);
     }
 }
@@ -454,19 +533,52 @@ function closeCostModal() {
     document.getElementById('cost-modal').classList.add('hidden');
 }
 
-async function init() {
-    initRenacerDropdown();
+function statCell(icon, value, label) {
+    return `
+        <div class="stat-cell">
+            <img src="resources/${icon}" alt="${label}" loading="lazy">
+            <span>${escapeHtml(value)}</span>
+        </div>
+    `;
+}
 
+function renderSuperRebirthsTable() {
+    const tbody = document.querySelector('#super-rebirths-table tbody');
+    tbody.innerHTML = '';
+    for (const sr of superRebirths) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${escapeHtml(sr.nivel)}</td>
+            <td>${statCell('Crystal.png', sr.cristales, 'Cristales Nova')}</td>
+            <td>${statCell('Credits.webp', sr.ingresos, 'Ingresos')}</td>
+            <td>${statCell('XP.png', sr.xp, 'XP')}</td>
+        `;
+        tbody.appendChild(tr);
+    }
+}
+
+function openSuperRebirthsModal() {
+    renderSuperRebirthsTable();
+    document.getElementById('super-rebirths-modal').classList.remove('hidden');
+}
+
+function closeSuperRebirthsModal() {
+    document.getElementById('super-rebirths-modal').classList.add('hidden');
+}
+
+async function init() {
     try {
-        const [droidsText, upgradesText, imagesText, c1Text, c2Text, c3Text, c4Text] = await Promise.all([
+        const [droidsText, upgradesText, imagesText, superText, cycleTexts] = await Promise.all([
             fetchText('droids.csv'),
             fetchText('upgrade_chips.csv'),
             fetchText('images_droids.csv'),
-            fetchText('renaceres_ciclo_1.csv'),
-            fetchText('renaceres_ciclo_2.csv'),
-            fetchText('renaceres_ciclo_3.csv'),
-            fetchText('renaceres_ciclo_4.csv'),
+            fetchText('super_rebirths.csv'),
+            fetchRebirthFiles(),
         ]);
+
+        if (cycleTexts.length === 0) {
+            throw new Error('No se ha encontrado ningún renaceres_ciclo_N.csv');
+        }
 
         const droidsRows = parseCSV(droidsText);
         const upgradesRows = parseCSV(upgradesText);
@@ -474,6 +586,7 @@ async function init() {
 
         upgradeCosts = loadUpgradeCosts(upgradesRows);
         imageLookup = loadImageLookup(imagesRows);
+        superRebirths = loadSuperRebirths(parseCSV(superText));
 
         const droidNames = loadDroids(droidsRows);
         initDroidDropdown(droidNames);
@@ -494,12 +607,10 @@ async function init() {
         }
         window._droidRarityMap = qualityMap;
 
-        rebirths = [
-            ...loadRebirths(parseCSV(c1Text), 1),
-            ...loadRebirths(parseCSV(c2Text), 2),
-            ...loadRebirths(parseCSV(c3Text), 3),
-            ...loadRebirths(parseCSV(c4Text), 4),
-        ];
+        rebirths = cycleTexts.flatMap((text, idx) => loadRebirths(parseCSV(text), idx + 1));
+        const maxRenacer = rebirths.reduce((max, rb) => Math.max(max, rb.renacer), 0);
+        initCicloDropdown(cycleTexts.length);
+        initRenacerDropdown(maxRenacer);
     } catch (e) {
         showError(`Error cargando datos: ${e.message}. Asegúrate de servir la app desde un servidor HTTP.`);
         return;
@@ -520,7 +631,7 @@ async function init() {
 
         const { results, maxRarity } = findRebirths(droide, ciclo, renacer);
         const remaining = findRemainingRebirths(ciclo, renacer);
-        const payload = { rebirthResults: results, maxRarity, droidName: droide, currentRarity: calidad, remaining };
+        const payload = { rebirthResults: results, maxRarity, droidName: droide, currentRarity: calidad, remaining, ciclo };
         lastResults = payload;
         activateTab('tab-necesario');
         renderResults(payload);
@@ -530,13 +641,22 @@ async function init() {
     document.getElementById('tab-coste').addEventListener('click', () => activateTab('tab-coste'));
     document.getElementById('tab-restantes').addEventListener('click', () => activateTab('tab-restantes'));
 
-    document.getElementById('ver-costes').addEventListener('click', openCostModal);
+    document.getElementById('menu-super-rebirths').addEventListener('click', openSuperRebirthsModal);
+    document.getElementById('super-rebirths-close').addEventListener('click', closeSuperRebirthsModal);
+    document.getElementById('super-rebirths-modal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeSuperRebirthsModal();
+    });
+
+    document.getElementById('menu-cost-rarity').addEventListener('click', openCostModal);
     document.getElementById('cost-modal-close').addEventListener('click', closeCostModal);
     document.getElementById('cost-modal').addEventListener('click', (e) => {
         if (e.target === e.currentTarget) closeCostModal();
     });
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeCostModal();
+        if (e.key === 'Escape') {
+            closeCostModal();
+            closeSuperRebirthsModal();
+        }
     });
 }
 

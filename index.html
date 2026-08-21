@@ -12,16 +12,16 @@
         <p class="subtitle">Indica tu ciclo, renacer y droide (puedes filtrar antes por Rareza y Clase) para ver en qué renaceres futuros lo necesitarás y cuánto costará mejorarlo.</p>
     </header>
 
+    <nav class="top-menu" role="navigation" aria-label="Menú principal">
+        <button id="menu-super-rebirths" class="menu-btn" type="button">Super Renaceres</button>
+        <button id="menu-cost-rarity" class="menu-btn" type="button">Costes Rareza</button>
+    </nav>
+
     <main>
         <section class="filters">
             <div class="field">
                 <label for="ciclo">Ciclo</label>
-                <select id="ciclo">
-                    <option value="1">Ciclo 1</option>
-                    <option value="2">Ciclo 2</option>
-                    <option value="3">Ciclo 3</option>
-                    <option value="4">Ciclo 4</option>
-                </select>
+                <select id="ciclo"></select>
             </div>
 
             <div class="field">
@@ -59,11 +59,11 @@
                     <option value="RAINBOW">RAINBOW</option>
                     <option value="BESKAR">BESKAR</option>
                     <option value="GALACTIC">GALACTIC</option>
+                    <option value="STELLAR">STELLAR</option>
                 </select>
             </div>
 
             <button id="buscar" type="button">Buscar</button>
-            <button id="ver-costes" type="button">Ver costes de rareza</button>
         </section>
 
         <section id="results" class="results hidden">
@@ -136,14 +136,26 @@
                 </header>
                 <p class="modal-subtitle">Coste en chips para llevar a un droide de una rareza a la siguiente. Filas = rareza base; columnas = calidad objetivo.</p>
                 <table id="cost-modal-table">
+                    <thead></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="super-rebirths-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="super-rebirths-title">
+            <div class="modal-content">
+                <header class="modal-header">
+                    <h2 id="super-rebirths-title">Super Renaceres</h2>
+                    <button id="super-rebirths-close" type="button" class="modal-close" aria-label="Cerrar">&times;</button>
+                </header>
+                <p class="modal-subtitle">Recompensas y bonificaciones obtenidas al alcanzar cada super renacer.</p>
+                <table id="super-rebirths-table">
                     <thead>
                         <tr>
-                            <th>Rareza</th>
-                            <th>Gold</th>
-                            <th>Diamond</th>
-                            <th>Rainbow</th>
-                            <th>Beskar</th>
-                            <th>Galactic</th>
+                            <th>Renacer</th>
+                            <th>Cristales Nova</th>
+                            <th>% Ingresos incrementados</th>
+                            <th>% XP incrementado</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
