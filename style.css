@@ -365,6 +365,10 @@ footer {
     #super-rebirths-table th:first-child,
     #super-rebirths-table td:first-child { width: 64px; font-size: 0.8rem; }
 
+    #fusion-table th:first-child,
+    #fusion-table td:first-child { width: 90px; }
+    .fusion-result .droid-name { font-size: 0.78rem; }
+
     button[type="button"] { padding: 0.6rem 0.8rem; font-size: 0.95rem; }
 }
 
@@ -475,4 +479,43 @@ footer {
 .stat-cell span {
     font-weight: 600;
     font-size: 0.9rem;
+}
+
+#fusion-table th,
+#fusion-table td {
+    text-align: center;
+    vertical-align: middle;
+    padding: 0.4rem;
+}
+
+#fusion-table th:first-child,
+#fusion-table td:first-child {
+    width: 130px;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+#fusion-table td:nth-child(3),
+#fusion-table td:nth-child(4),
+#fusion-table td:nth-child(5) {
+    overflow: hidden;
+}
+
+.fusion-result {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.3rem;
+}
+
+.fusion-result .droid-name {
+    font-weight: 700;
+    font-size: 0.95rem;
+    word-break: break-word;
+}
+
+.fusion-filters {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    gap: 0.8rem;
 }

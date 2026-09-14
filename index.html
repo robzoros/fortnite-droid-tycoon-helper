@@ -15,6 +15,7 @@
     <nav class="top-menu" role="navigation" aria-label="Menú principal">
         <button id="menu-super-rebirths" class="menu-btn" type="button">Super Renaceres</button>
         <button id="menu-cost-rarity" class="menu-btn" type="button">Costes Rareza</button>
+        <button id="menu-fusions" class="menu-btn" type="button">Fusiones</button>
     </nav>
 
     <main>
@@ -156,6 +157,50 @@
                             <th>Cristales Nova</th>
                             <th>% Ingresos incrementados</th>
                             <th>% XP incrementado</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="fusion-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="fusion-title">
+            <div class="modal-content">
+                <header class="modal-header">
+                    <h2 id="fusion-title">Fusiones</h2>
+                    <button id="fusion-modal-close" type="button" class="modal-close" aria-label="Cerrar">&times;</button>
+                </header>
+                <p class="modal-subtitle">Droides resultantes de fusionar tres droides concretos.</p>
+                <section class="filters fusion-filters">
+                    <div class="field">
+                        <label for="fusion-rareza">Rareza (opcional)</label>
+                        <select id="fusion-rareza">
+                            <option value="">-- Todas --</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="fusion-clase">Clase (opcional)</label>
+                        <select id="fusion-clase">
+                            <option value="">-- Todas --</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label for="fusion-droide">Droide</label>
+                        <select id="fusion-droide">
+                            <option value="">-- Todos --</option>
+                        </select>
+                    </div>
+                </section>
+                <table id="fusion-table">
+                    <thead>
+                        <tr>
+                            <th>Droide fusionado</th>
+                            <th>Rareza</th>
+                            <th>Droide 1</th>
+                            <th>Droide 2</th>
+                            <th>Droide 3</th>
                         </tr>
                     </thead>
                     <tbody></tbody>

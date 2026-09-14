@@ -42,11 +42,12 @@ El sistema lee los siguientes CSVs:
 - **renaceres_ciclo_1.csv** … **renaceres_ciclo_5.csv** — Columnas: `ciclo,renacer,creditos,droide_1,droide_2,droide_3`. Cada `droide_X` tiene formato `CALIDAD NOMBRE` (p. ej. `GOLD PROTO-ROLLER`). Para comparar por nombre hay que partir por el primer espacio; nunca buscar subcadena (`MOUSE` no debe matchear `SNOW MOUSE`). Los ficheros se descubren dinámicamente sondeando `renaceres_ciclo_N.csv` (N = 1, 2, 3…) hasta que uno no existe, así que un ciclo futuro solo requiere añadir su CSV.
 - **super_rebirths.csv** — Cabecera `Nivel_Rebirth,Cristales_Nova,Multiplicador_Creditos,Multiplicador_XP`. Un dato por super renacer (`RB12`…`RB35`): cristales Nova otorgados y porcentajes de incremento de ingresos y XP. Se muestra en la modal **Super Renaceres** del menú superior.
 - **images_droids.csv** — Cabecera `nombre,calidad,fichero`. Relaciona cada `nombre`+`calidad` con su fichero de imagen en `resources/` (patrón original `NOMBRE_RAREZA.webp`, con `_` en lugar de espacios). Sirve para resolver la imagen y el color de calidad del droide en el panel Restantes. No confundir con rareza.
+- **fusion_droids.csv** — Cabecera `droid_name,type,rarity,droid_1,droid_2,droid_3,default_income,gold_income,...` (las columnas de ingresos se ignoran por ahora). Una fila por droide fusionado: `droid_name` es el resultado, `type` su clase, `rarity` su rareza y `droid_1..3` los **nombres simples** (sin calidad) de los tres droides necesarios. Se muestra en la modal **Fusiones** del menú superior. Los droides fusionados no existen ni en `droids.csv` ni en `images_droids.csv`; sus ingredientes sí.
 
 ## Funcionamiento de la UI
 
 ### Menú superior
-- Bajo la cabecera hay un menú (`nav.top-menu`) con dos botones: **Super Renaceres** (`#menu-super-rebirths`) y **Costes Rareza** (`#menu-cost-rarity`).
+- Bajo la cabecera hay un menú (`nav.top-menu`) con tres botones: **Super Renaceres** (`#menu-super-rebirths`), **Costes Rareza** (`#menu-cost-rarity`) y **Fusiones** (`#menu-fusions`).
 - **Costes Rareza** abre la modal de costes de rareza (sustituyó al antiguo botón "Ver costes de rareza", ya eliminado).
 - **Super Renaceres** abre la modal `#super-rebirths-modal` con los datos de `super_rebirths.csv` en cuatro columnas:
   - `Renacer` (nivel, p. ej. `RB12`).
@@ -54,6 +55,10 @@ El sistema lee los siguientes CSVs:
   - `% Ingresos incrementados`: icono `resources/Credits.webp` y debajo el porcentaje.
   - `% XP incrementado`: icono `resources/XP.png` y debajo su valor.
 - Ambas modales se cierran con la `×`, clic fuera del cuadro o `Escape`, y se re-renderizan cada vez que se abren.
+- **Fusiones** abre la modal `#fusion-modal` con el contenido de `fusion_droids.csv` en cinco columnas:
+  - `Droide fusionado`: nombre (`droid_name`) coloreado con el color de su rareza.
+  - `Rareza`: badge de color (`rarityBadge`) según `rarity`.
+  - `Droide 1`, `Droide 2`, `Droide 3`: cada ingrediente renderizado con `renderNamedDroidCell(nombre)` (imagen desde `images_droids.csv` con calidad `DEFAULT`, fallback a `GOLD` y luego a `resources/Droidex-logo.PNG`; nombre coloreado por su rareza base en `droids.csv`).
 
 El usuario selecciona seis campos y pulsa **Buscar**:
 
@@ -108,6 +113,12 @@ Tabla con una fila por coincidencia: `Ciclo`, `Renacer`, `Créditos`, `Calidad n
 - La modal se cierra con la `×` (`#cost-modal-close`), haciendo clic fuera del cuadro o pulsando `Escape`.
 - La modal vuelve a renderizarse cada vez que se abre, de modo que refleja siempre la última versión del CSV tras un F5.
 
+### Modal de fusiones
+- Se abre desde la opción **Fusiones** del menú superior (`#menu-fusions`).
+- Muestra una fila por droide fusionado de `fusion_droids.csv` con columnas `Droide fusionado | Rareza | Droide 1 | Droide 2 | Droide 3` (estilo similar a la pestaña Restantes: celdas de droide con imagen y nombre coloreado, `.droid-cell`).
+- Los droides fusionados no tienen imagen (no están en `images_droids.csv`), por lo que solo muestran nombre coloreado y badge de rareza.
+- La modal (`#fusion-modal`) se cierra con la `×` (`#fusion-modal-close`), haciendo clic fuera del cuadro o pulsando `Escape`, y se re-renderiza cada vez que se abre.
+
 ## Despliegue y acceso en red local
 
 1. Doble clic en **`start.bat`** (pide UAC una vez). Añade la regla de firewall `FortniteDroidTycoonHelper` y arranca el servidor.
@@ -138,7 +149,7 @@ Tabla con una fila por coincidencia: `Ciclo`, `Renacer`, `Créditos`, `Calidad n
 - **Servidor silencioso**: `handle()` captura `OSError` (cubre `ConnectionResetError`, `ConnectionAbortedError`, `BrokenPipeError`) para no ensuciar la consola cuando un cliente cierra la conexión a mitad de petición.
 - **Parser CSV propio**: maneja comillas dobles; las celdas se trimean al insertar.
 - **Orden de calidad**: `DEFAULT < GOLD < DIAMOND < RAINBOW < BESKAR < GALACTIC < STELLAR` (vector `QUALITY_ORDER`, alias interno `RARITY_ORDER` para la lógica de cálculo).
-- **Estructura de datos**: `rebirths = [{ciclo, renacer, creditos, droid1, droid2, droid3}]` para todos los ciclos combinados; `upgradeCosts = {Common: {GOLD, DIAMOND, ...}, ...}`; `droidNameToMeta = {NOMBRE: {rarity, class}}` para el filtrado en vivo de Rareza/Clase; `imageLookup = {NOMBRE: {CALIDAD: fichero}}` para resolver imágenes del panel Restantes; `superRebirths = [{nivel, cristales, ingresos, xp}]` para la modal de Super Renaceres.
+- **Estructura de datos**: `rebirths = [{ciclo, renacer, creditos, droid1, droid2, droid3}]` para todos los ciclos combinados; `upgradeCosts = {Common: {GOLD, DIAMOND, ...}, ...}`; `droidNameToMeta = {NOMBRE: {rarity, class}}` para el filtrado en vivo de Rareza/Clase; `imageLookup = {NOMBRE: {CALIDAD: fichero}}` para resolver imágenes del panel Restantes; `superRebirths = [{nivel, cristales, ingresos, xp}]` para la modal de Super Renaceres; `fusions = [{name, type, rarity, droid1, droid2, droid3}]` para la modal de Fusiones.
 - **Droids sin fila de upgrade**: ICONIC. El panel de coste lo indica pero el de renaceres funciona normal.
 
 ## Convenciones

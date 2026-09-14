@@ -21,6 +21,8 @@ let droidTaxonomy = { rarities: [], classes: [] };
 let droidNameToMeta = {};
 let imageLookup = {};
 let superRebirths = [];
+let fusions = [];
+let fusionIngredientMap = {};
 let lastResults = null;
 
 async function fetchText(path) {
@@ -138,6 +140,56 @@ function loadSuperRebirths(rows) {
         });
     }
     return data;
+}
+
+function loadFusions(rows) {
+    const data = [];
+    for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row || row.length < 6) continue;
+        if (!row[0]) continue;
+        data.push({
+            name: row[0],
+            type: row[1],
+            rarity: row[2],
+            droid1: row[3],
+            droid2: row[4],
+            droid3: row[5],
+        });
+    }
+    return data;
+}
+
+function buildFusionIngredientMap() {
+    const map = {};
+    for (const f of fusions) {
+        for (const name of [f.droid1, f.droid2, f.droid3]) {
+            const trimmed = name ? name.trim() : '';
+            if (!trimmed) continue;
+            const key = trimmed.toUpperCase();
+            if (!map[key]) map[key] = trimmed;
+        }
+    }
+    return map;
+}
+
+function getFusionIngredientRarities() {
+    const rarities = new Set();
+    for (const key of Object.keys(fusionIngredientMap)) {
+        const meta = droidNameToMeta[key];
+        if (meta && meta.rarity) rarities.add(meta.rarity);
+    }
+    return RARITY_DISPLAY_ORDER.filter(r => rarities.has(r))
+        .concat(Array.from(rarities).filter(r => !RARITY_DISPLAY_ORDER.includes(r)).sort((a, b) => a.localeCompare(b)));
+}
+
+function getFusionIngredientClasses() {
+    const classes = new Set();
+    for (const key of Object.keys(fusionIngredientMap)) {
+        const meta = droidNameToMeta[key];
+        if (meta && meta.class) classes.add(meta.class);
+    }
+    return Array.from(classes).sort((a, b) => a.localeCompare(b));
 }
 
 function parseDroidCell(value) {
@@ -566,13 +618,107 @@ function closeSuperRebirthsModal() {
     document.getElementById('super-rebirths-modal').classList.add('hidden');
 }
 
+function renderNamedDroidCell(name) {
+    const key = name.trim().toUpperCase();
+    const meta = droidNameToMeta[key] || {};
+    const baseRarity = meta.rarity || 'COMMON';
+    const lookup = imageLookup[key] || {};
+    let file = lookup['DEFAULT'];
+    if (!file && lookup['GOLD']) {
+        file = lookup['GOLD'];
+    }
+    const imgSrc = file ? `resources/${escapeHtml(file)}` : 'resources/Droidex-logo.PNG';
+    return `
+        <div class="droid-cell">
+            <img src="${imgSrc}" alt="${escapeHtml(name)}" loading="lazy">
+            <span class="droid-name name-${baseRarity}">${escapeHtml(name)}</span>
+        </div>
+    `;
+}
+
+function renderFusionsTable() {
+    const selected = document.getElementById('fusion-droide').value;
+    const key = selected ? selected.toUpperCase() : '';
+    const tbody = document.querySelector('#fusion-table tbody');
+    tbody.innerHTML = '';
+    const filtered = key
+        ? fusions.filter(f => [f.droid1, f.droid2, f.droid3].some(d => d && d.trim().toUpperCase() === key))
+        : fusions;
+    for (const f of filtered) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>
+                <div class="fusion-result">
+                    <span class="droid-name name-${f.rarity}">${escapeHtml(f.name)}</span>
+                </div>
+            </td>
+            <td>${rarityBadge(f.rarity)}</td>
+            <td>${renderNamedDroidCell(f.droid1)}</td>
+            <td>${renderNamedDroidCell(f.droid2)}</td>
+            <td>${renderNamedDroidCell(f.droid3)}</td>
+        `;
+        tbody.appendChild(tr);
+    }
+}
+
+function updateFusionDroidDropdown() {
+    const rareza = document.getElementById('fusion-rareza').value;
+    const clase = document.getElementById('fusion-clase').value;
+    const select = document.getElementById('fusion-droide');
+    const currentValue = select.value;
+
+    const filtered = Object.keys(fusionIngredientMap)
+        .filter(key => {
+            const meta = droidNameToMeta[key];
+            if (!meta) return false;
+            if (rareza && meta.rarity !== rareza) return false;
+            if (clase && meta.class !== clase) return false;
+            return true;
+        })
+        .sort((a, b) => a.localeCompare(b));
+
+    select.innerHTML = '';
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = filtered.length === 0 ? '-- Ningún droide coincide --' : '-- Todos --';
+    select.appendChild(placeholder);
+    for (const key of filtered) {
+        const opt = document.createElement('option');
+        opt.value = key;
+        opt.textContent = fusionIngredientMap[key];
+        select.appendChild(opt);
+    }
+
+    if (currentValue && filtered.includes(currentValue)) {
+        select.value = currentValue;
+    }
+    renderFusionsTable();
+}
+
+function initFusionFilters() {
+    initSelectOptions('fusion-rareza', getFusionIngredientRarities(), '-- Todas --');
+    initSelectOptions('fusion-clase', getFusionIngredientClasses(), '-- Todas --');
+    document.getElementById('fusion-droide').value = '';
+    updateFusionDroidDropdown();
+}
+
+function openFusionModal() {
+    initFusionFilters();
+    document.getElementById('fusion-modal').classList.remove('hidden');
+}
+
+function closeFusionModal() {
+    document.getElementById('fusion-modal').classList.add('hidden');
+}
+
 async function init() {
     try {
-        const [droidsText, upgradesText, imagesText, superText, cycleTexts] = await Promise.all([
+        const [droidsText, upgradesText, imagesText, superText, fusionsText, cycleTexts] = await Promise.all([
             fetchText('droids.csv'),
             fetchText('upgrade_chips.csv'),
             fetchText('images_droids.csv'),
             fetchText('super_rebirths.csv'),
+            fetchText('fusion_droids.csv'),
             fetchRebirthFiles(),
         ]);
 
@@ -587,6 +733,8 @@ async function init() {
         upgradeCosts = loadUpgradeCosts(upgradesRows);
         imageLookup = loadImageLookup(imagesRows);
         superRebirths = loadSuperRebirths(parseCSV(superText));
+        fusions = loadFusions(parseCSV(fusionsText));
+        fusionIngredientMap = buildFusionIngredientMap();
 
         const droidNames = loadDroids(droidsRows);
         initDroidDropdown(droidNames);
@@ -652,10 +800,20 @@ async function init() {
     document.getElementById('cost-modal').addEventListener('click', (e) => {
         if (e.target === e.currentTarget) closeCostModal();
     });
+
+    document.getElementById('menu-fusions').addEventListener('click', openFusionModal);
+    document.getElementById('fusion-modal-close').addEventListener('click', closeFusionModal);
+    document.getElementById('fusion-modal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeFusionModal();
+    });
+    document.getElementById('fusion-rareza').addEventListener('change', updateFusionDroidDropdown);
+    document.getElementById('fusion-clase').addEventListener('change', updateFusionDroidDropdown);
+    document.getElementById('fusion-droide').addEventListener('change', renderFusionsTable);
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             closeCostModal();
             closeSuperRebirthsModal();
+            closeFusionModal();
         }
     });
 }

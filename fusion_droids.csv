@@ -1,0 +1,18 @@
+droid_name,type,rarity,droid_1,droid_2,droid_3,default_income,gold_income,diamond_income,rainbow_income,beskar_income,galactic_income,stellar_income
+WHL-EX,Worker,Rare,ARG,Mouse,Mouse,72/s,,,576/s,,,2.30K/s
+ZRO-TEC,Astromech,Rare,ID10,ID10,2BB,72/s,144/s,288/s,,,,2.30K/s
+BTL-R,Battle,Rare,BDX Explorer,B1 Battle,R9,72/s,144/s,,,,,2.30K/s
+N-UL,Worker,Epic,B1 Heavy,Gunrunner,BB,720/s,,,,5.76K/s,,57.6K/s
+SCRP-R,Astromech,Epic,GONK,R6,Groundmech,720/s,,,,5.76K/s,37.44K/s,57.6K/s
+ARM-CORE,Battle,Epic,ARG,ARG,B2 Heavy,690/s,,,,23.46K/s,35.88K/s,55.20K/s
+OPT-AR,Battle,Epic,R2,R2,B2 Super,720/s,,,,24.48K/s,,
+RO-TOR,Worker,Legendary,BB9,Pit,B1 Battle,1.50K/s,3.0K/s,,,36.0K/s,90K/s,225K/s
+FUS-3,Worker,Legendary,R7,BU-4D,BU-4D,1.6K/s,,,,12.80K/s,96K/s,240K/s
+QIK-BIT,Astromech,Legendary,Groundmech,Groundmech,BB9,1.60K/s,,6.4K/s,,,,240K/s
+ORB-XL,Battle,Legendary,CB,Gunrunner,B2-RP,1.60K/s,,,,12.80K/s,38.40K/s,240K/s
+RIV-3T,Worker,Mythic,KX,IG,RIC,8.4K/s,16.80K/s,,,,369.60K/s,1.05M/s
+LUG-G,Worker,Mythic,Loadlifter,ID10,R5,7.60K/s,,,30.40K/s,60.8K/s,121.60K/s,950K/s
+LOW-MO,Worker,Mythic,Loadlifter,A-LT,A-LT,,,,62.40K/s,124.8K/s,343.20K/s,975K/s
+AXI-POD,Astromech,Mythic,R7,BDX Explorer,RIC,8.0K/s,,32K/s,64.0K/s,128.0K/s,352.0K/s,1M/s
+SRV-O,Battle,Mythic,RIC-1200,B1 Heavy,B1 Heavy,7.60K/s,,,60.8K/s,121.6K/s,,950K/s
+X-ONK,Battle,Mythic,KX,KX,GONK,8.0K/s,,,64.0K/s,128.0K/s,352.0K/s,1M/s
