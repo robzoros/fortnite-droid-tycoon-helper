@@ -1,0 +1,12 @@
+exclude:
+  - AGENTS.MD
+  - server.py
+  - start.bat
+  - diagnostico.bat
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor
+  - .sass-cache
+  - .jekyll-cache
+  - .jekyll-metadata
