@@ -2,3 +2,7 @@
 _log_8000.txt
 __pycache__/
 .DS_Store
+server.py
+start.bat
+diagnostico.bat
+AGENTS.MD
