@@ -1,4 +1,4 @@
-const RARITY_ORDER = ['DEFAULT', 'GOLD', 'DIAMOND', 'RAINBOW', 'BESKAR', 'GALACTIC', 'STELLAR'];
+const RARITY_ORDER = ['DEFAULT', 'GOLD', 'DIAMOND', 'RAINBOW', 'BESKAR', 'GALACTIC', 'STELLAR', 'KYBER'];
 
 const RARITY_TO_UPGRADE_KEY = {
     'COMMON': 'Common',
@@ -9,7 +9,7 @@ const RARITY_TO_UPGRADE_KEY = {
     'ICONIC': null,
 };
 
-const QUALITY_ORDER = ['DEFAULT', 'GOLD', 'DIAMOND', 'RAINBOW', 'BESKAR', 'GALACTIC', 'STELLAR'];
+const QUALITY_ORDER = ['DEFAULT', 'GOLD', 'DIAMOND', 'RAINBOW', 'BESKAR', 'GALACTIC', 'STELLAR', 'KYBER'];
 
 const RARITY_DISPLAY_ORDER = ['COMMON', 'RARE', 'EPIC', 'LEGENDARY', 'MYTHIC', 'ICONIC'];
 
@@ -433,7 +433,9 @@ function renderResults(payload) {
     breakdownBody.innerHTML = '';
     breakdownTable.classList.add('hidden');
 
-    if (!upgradeRow) {
+    if (!maxRarity) {
+        summary.innerHTML = `El droide <strong>${escapeHtml(droidName)}</strong> no aparece en ningún renacer posterior al actual en este ciclo, así que no hay ninguna calidad máxima que calcular.`;
+    } else if (!upgradeRow) {
         summary.innerHTML = `Tu droide <strong>${escapeHtml(droidName)}</strong> necesita llegar a ${rarityBadge(maxRarity)}. No hay tabla de mejoras disponible para esta rareza base.`;
     } else {
         const cost = computeUpgradeCost(upgradeRow, currentRarity, maxRarity);

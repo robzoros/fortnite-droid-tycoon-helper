@@ -185,6 +185,7 @@ tbody tr:hover {
 .rarity-BESKAR { background: #6c757d; color: #fff; }
 .rarity-GALACTIC { background: linear-gradient(135deg, #8a2be2, #ff1493); color: #fff; }
 .rarity-STELLAR { background: linear-gradient(135deg, #ffffff, #7be0ff); color: #1b2a38; }
+.rarity-KYBER { background: #39ff14; color: #06280a; box-shadow: 0 0 8px rgba(57, 255, 20, 0.85); }
 
 .name-COMMON { color: rgb(0, 192, 73); }
 .name-RARE { color: rgb(0, 115, 230); }
