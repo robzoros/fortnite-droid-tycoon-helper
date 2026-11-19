@@ -9,7 +9,7 @@
 <body>
     <header>
         <h1>Fortnite Droid Tycoon Helper</h1>
-        <p class="subtitle">Indica tu ciclo, renacer y droide (puedes filtrar antes por Rareza y Clase) para ver en qué renaceres futuros lo necesitarás y cuánto costará mejorarlo.</p>
+        <p class="subtitle">Con elegir el ciclo ya ves todos los renaceres restantes. El renacer afina el punto de partida y el filtro de droide añade dónde se necesita y su coste de mejora.</p>
     </header>
 
     <nav class="top-menu" role="navigation" aria-label="Menú principal">
@@ -19,96 +19,70 @@
     </nav>
 
     <main>
-        <section class="filters">
-            <div class="field">
-                <label for="ciclo">Ciclo</label>
-                <select id="ciclo"></select>
+        <section class="card zone-card" aria-label="Ciclo y renacer">
+            <h2>Ciclo</h2>
+            <div class="cycle-row">
+                <div class="field">
+                    <label for="ciclo">Ciclo</label>
+                    <select id="ciclo"></select>
+                </div>
+
+                <div class="field">
+                    <label for="renacer">Renacer</label>
+                    <select id="renacer"></select>
+                </div>
+
+                <button id="ver-restantes" type="button" class="btn-secondary">Ver restantes</button>
+            </div>
+        </section>
+
+        <section class="card zone-card" aria-label="Filtro de droide">
+            <h2>Tu droide</h2>
+            <div class="zone-fields">
+                <div class="field">
+                    <label for="rareza">Rareza (opcional)</label>
+                    <select id="rareza-select">
+                        <option value="">-- Todas --</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label for="clase">Clase (opcional)</label>
+                    <select id="clase">
+                        <option value="">-- Todas --</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label for="droide">Droide</label>
+                    <select id="droide">
+                        <option value="">-- Cargando droides... --</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label for="calidad">Calidad actual</label>
+                    <select id="calidad">
+                        <option value="DEFAULT">DEFAULT</option>
+                        <option value="GOLD">GOLD</option>
+                        <option value="DIAMOND">DIAMOND</option>
+                        <option value="RAINBOW">RAINBOW</option>
+                        <option value="BESKAR">BESKAR</option>
+                        <option value="GALACTIC">GALACTIC</option>
+                        <option value="STELLAR">STELLAR</option>
+                        <option value="KYBER">KYBER</option>
+                    </select>
+                </div>
             </div>
 
-            <div class="field">
-                <label for="renacer">Renacer actual</label>
-                <select id="renacer"></select>
+            <div class="zone-actions">
+                <button id="buscar" type="button">Buscar droide</button>
             </div>
-
-            <div class="field">
-                <label for="rareza">Rareza (opcional)</label>
-                <select id="rareza-select">
-                    <option value="">-- Todas --</option>
-                </select>
-            </div>
-
-            <div class="field">
-                <label for="clase">Clase (opcional)</label>
-                <select id="clase">
-                    <option value="">-- Todas --</option>
-                </select>
-            </div>
-
-            <div class="field">
-                <label for="droide">Droide</label>
-                <select id="droide">
-                    <option value="">-- Cargando droides... --</option>
-                </select>
-            </div>
-
-            <div class="field">
-                <label for="calidad">Calidad actual</label>
-                <select id="calidad">
-                    <option value="DEFAULT">DEFAULT</option>
-                    <option value="GOLD">GOLD</option>
-                    <option value="DIAMOND">DIAMOND</option>
-                    <option value="RAINBOW">RAINBOW</option>
-                    <option value="BESKAR">BESKAR</option>
-                    <option value="GALACTIC">GALACTIC</option>
-                    <option value="STELLAR">STELLAR</option>
-                    <option value="KYBER">KYBER</option>
-                </select>
-            </div>
-
-            <button id="buscar" type="button">Buscar</button>
         </section>
 
         <section id="results" class="results hidden">
-            <div class="tabs" role="tablist">
-                <button id="tab-necesario" class="tab active" role="tab" aria-selected="true" aria-controls="panel-necesario">Necesario</button>
-                <button id="tab-coste" class="tab" role="tab" aria-selected="false" aria-controls="panel-coste">Coste</button>
-                <button id="tab-restantes" class="tab" role="tab" aria-selected="false" aria-controls="panel-restantes">Restantes</button>
-            </div>
-
-            <div id="panel-necesario" class="card tab-panel" role="tabpanel" aria-labelledby="tab-necesario">
-                <h2>Renaceres donde se necesita el droide</h2>
-                <p id="rebirths-count"></p>
-                <table id="rebirths-table">
-                    <thead>
-                        <tr>
-                            <th>Ciclo</th>
-                            <th>Renacer</th>
-                            <th>Créditos</th>
-                            <th>Calidad necesaria</th>
-                            <th>Slot</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-
-            <div id="panel-coste" class="card tab-panel hidden" role="tabpanel" aria-labelledby="tab-coste">
-                <h2>Coste de mejora</h2>
-                <p id="cost-summary"></p>
-                <table id="cost-breakdown" class="hidden">
-                    <thead>
-                        <tr>
-                            <th>De</th>
-                            <th>A</th>
-                            <th>Coste (chips)</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-
-            <div id="panel-restantes" class="card tab-panel hidden" role="tabpanel" aria-labelledby="tab-restantes">
-                <h2>Renaceres restantes del ciclo</h2>
+            <div id="card-restantes" class="card">
+                <h2>Restantes del ciclo <span id="restantes-ciclo">1</span></h2>
                 <p id="remaining-count"></p>
                 <table id="remaining-table">
                     <thead>
@@ -121,6 +95,45 @@
                     </thead>
                     <tbody></tbody>
                 </table>
+            </div>
+
+            <div id="card-droide" class="card hidden">
+                <div class="tabs" role="tablist">
+                    <button id="tab-necesario" class="tab active" role="tab" aria-selected="true" aria-controls="panel-necesario">Necesario</button>
+                    <button id="tab-coste" class="tab" role="tab" aria-selected="false" aria-controls="panel-coste">Coste</button>
+                </div>
+
+                <div id="panel-necesario" class="tab-panel" role="tabpanel" aria-labelledby="tab-necesario">
+                    <h2>Renaceres donde se necesita el droide</h2>
+                    <p id="rebirths-count"></p>
+                    <table id="rebirths-table">
+                        <thead>
+                            <tr>
+                                <th>Ciclo</th>
+                                <th>Renacer</th>
+                                <th>Créditos</th>
+                                <th>Calidad necesaria</th>
+                                <th>Slot</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+
+                <div id="panel-coste" class="tab-panel hidden" role="tabpanel" aria-labelledby="tab-coste">
+                    <h2>Coste de mejora</h2>
+                    <p id="cost-summary"></p>
+                    <table id="cost-breakdown" class="hidden">
+                        <thead>
+                            <tr>
+                                <th>De</th>
+                                <th>A</th>
+                                <th>Coste (chips)</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
             </div>
         </section>
 

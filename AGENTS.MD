@@ -60,36 +60,45 @@ El sistema lee los siguientes CSVs:
   - `Rareza`: badge de color (`rarityBadge`) según `rarity`.
   - `Droide 1`, `Droide 2`, `Droide 3`: cada ingrediente renderizado con `renderNamedDroidCell(nombre)` (imagen desde `images_droids.csv` con calidad `DEFAULT`, fallback a `GOLD` y luego a `resources/Droidex-logo.PNG`; nombre coloreado por su rareza base en `droids.csv`).
 
-El usuario selecciona seis campos y pulsa **Buscar**:
+La página se organiza en dos bloques: **Ciclo** (con el renacer dentro) y **Tu droide**, más dos tarjetas de resultados independientes (*Restantes* y la del droide con pestañas Necesario/Coste).
 
-1. **Ciclo** (obligatorio, 1–5). El desplegable se genera dinámicamente según los ficheros `renaceres_ciclo_N.csv` encontrados. No existe opción "Todos": la búsqueda debe hacerse **siempre dentro de un ciclo**.
-2. **Renacer actual** (obligatorio, 1–40). El máximo del desplegable se deriva del mayor `renacer` presente en los CSVs. Representa el renacer en el que está el jugador. **No existe opción "Todos"**: la búsqueda muestra los renaceres **a partir del seleccionado** (`renacer >= renacerActual`).
-3. **Rareza** (opcional): desplegable `#rareza-select` con las rarezas únicas presentes en `droids.csv` columna 1 (`COMMON`, `RARE`, `EPIC`, `LEGENDARY`, `MYTHIC`, `ICONIC`, etc.). La lista se deriva dinámicamente de `droids.csv` para que se actualice sola si en el futuro aparecen nuevas rarezas. Por defecto `-- Todas --` (sin filtro).
-4. **Clase** (opcional): desplegable `#clase` con las clases únicas presentes en `droids.csv` columna 3 (`WORKER`, `ASTROMECH`, `BATTLE`, etc.). También derivado dinámicamente. Por defecto `-- Todas --` (sin filtro).
-5. **Droide** (obligatorio): desplegable con los droides únicos de `droids.csv` ordenados alfabéticamente. **Se filtra en vivo** según los valores de Rareza y Clase: si ambos están en "Todas" muestra todos; si solo uno está fijado, lista solo los droides que coinciden con ese criterio; si ambos están fijados, lista los droides que cumplen ambos. Si no hay coincidencias, el desplegable muestra `-- Ningún droide coincide --` y el botón **Buscar** no permitirá avanzar sin selección.
-6. **Calidad actual** (obligatorio): desplegable `#calidad` con `DEFAULT`, `GOLD`, `DIAMOND`, `RAINBOW`, `BESKAR`, `GALACTIC`, `STELLAR`, `KYBER`. **Se usa SOLO para calcular el coste de mejora; nunca filtra los resultados.**
+### Bloque Ciclo (único necesario)
 
-Tras pulsar **Buscar** se muestran tres pestañas debajo, en este orden:
+1. **Ciclo** (obligatorio, 1–N). El desplegable se genera dinámicamente según los ficheros `renaceres_ciclo_N.csv` encontrados (un ciclo futuro solo requiere añadir su CSV). No existe opción "Todos": todo se consulta **siempre dentro de un ciclo**.
+2. **Renacer** (opcional, dentro del mismo cuadro). Desplegable `#renacer` con opción `-- Todos --` por defecto. Su máximo se deriva del mayor `renacer` del ciclo seleccionado y se regenera al cambiar de ciclo. Solo alimenta la tarjeta **Restantes**: con ciclo solo se lista todo el ciclo; con renacer elegido, la lista empieza a partir de ese renacer (`renacer > renacerActual`). No afecta a la búsqueda de droide.
+3. Botón **Ver restantes** re-renderiza la tarjeta Restantes con el ciclo y renacer actuales. Al cambiar ciclo o renacer la tarjeta se actualiza también automáticamente.
 
-- **Necesario** — renaceres donde aparece el droide buscado.
-- **Coste** — coste de mejora y desglose.
-- **Restantes** — renaceres superiores al actual.
+### Bloque Tu droide (opcional · alimenta Necesario y Coste)
 
-### Pestaña Necesario
+Pulsar **Buscar droide** requiere solo el desplegable **Droide**; los demás campos son opcionales:
+
+1. **Rareza** (opcional): desplegable `#rareza-select` con las rarezas únicas presentes en `droids.csv` columna 1 (`COMMON`, `RARE`, `EPIC`, `LEGENDARY`, `MYTHIC`, `ICONIC`, etc.). La lista se deriva dinámicamente de `droids.csv` para que se actualice sola si en el futuro aparecen nuevas rarezas. Por defecto `-- Todas --` (sin filtro).
+2. **Clase** (opcional): desplegable `#clase` con las clases únicas presentes en `droids.csv` columna 3 (`WORKER`, `ASTROMECH`, `BATTLE`, etc.). También derivado dinámicamente. Por defecto `-- Todas --` (sin filtro).
+3. **Droide** (obligatorio para Buscar): desplegable con los droides únicos de `droids.csv` ordenados alfabéticamente. **Se filtra en vivo** según los valores de Rareza y Clase: si ambos están en "Todas" muestra todos; si solo uno está fijado, lista solo los droides que coinciden con ese criterio; si ambos están fijados, lista los droides que cumplen ambos. Si no hay coincidencias, el desplegable muestra `-- Ningún droide coincide --` y el botón **Buscar droide** no permitirá avanzar sin selección.
+4. **Calidad actual** (obligatorio): desplegable `#calidad` con `DEFAULT`, `GOLD`, `DIAMOND`, `RAINBOW`, `BESKAR`, `GALACTIC`, `STELLAR`, `KYBER`. **Se usa SOLO para calcular el coste de mejora; nunca filtra los resultados.**
+
+Al pulsar **Buscar droide** aparecen dos tarjetas independientes:
+
+- **Restantes** (tarjeta `#card-restantes`) — renaceres del ciclo, recortados por el renacer elegido si lo hay. Puede existir sin buscar ningún droide.
+- **Droide** (tarjeta `#card-droide`) — con pestañas **Necesario** y **Coste**. Solo aparece al buscar un droide; si el droide no aparece en el ciclo, se muestra el mensaje de vacío y la tarjeta se oculta.
+
+### Tarjeta Restantes
+- Lista los renaceres del **mismo ciclo** (uno por fila); si hay renacer elegido, solo los `renacer > renacerActual`.
+
+### Pestaña Necesario (tarjeta del droide)
 Tabla con una fila por coincidencia: `Ciclo`, `Renacer`, `Créditos`, `Calidad necesaria` (con badge de color), `Slot` (1, 2 o 3).
 
-- Se listan todos los renaceres del ciclo seleccionado con `renacer > renacerActual` en los que el droide aparece en cualquiera de los tres slots.
+- Se listan todos los renaceres del ciclo seleccionado en los que el droide aparece en cualquiera de los tres slots. **No depende del renacer elegido**: solo del ciclo y del droide.
 - La **calidad máxima necesaria** se calcula como la calidad más alta entre todas las coincidencias.
 
-### Pestaña Coste
+### Pestaña Coste (tarjeta del droide)
 - Suma los pasos necesarios para pasar de `calidadActual` a `calidadMaxima` consultando `upgrade_chips.csv`.
 - Ejemplo (de las instrucciones originales): droide `EPIC` en `GOLD` con calidad máxima necesaria `BESKAR` → 180 + 240 + 3000 = **3420 chips**.
 - Si `calidadActual >= calidadMaxima` → coste **0 chips**, mensaje informativo. **En este caso la tabla de desglose se oculta**, no se muestra la cabecera vacía.
 - Si la rareza del droide es `ICONIC` (sin fila en `upgrade_chips.csv`) → mensaje "no hay tabla de mejoras disponible" y la tabla de desglose también permanece oculta.
 - Tabla desglose con filas `De | A | Coste` por cada salto de calidad (solo si hay pasos que mostrar).
 
-### Pestaña Restantes
-- Lista los renaceres del **mismo ciclo** con `renacer > renacerActual` (uno por fila).
+### Tarjeta Restantes
 - Columnas: `Renacer | Droide 1 | Droide 2 | Droide 3`.
 - Cada celda de droide muestra la imagen desde `resources/<fichero>` (resuelta vía `images_droids.csv`), debajo el **nombre del droide** coloreado con el color de su **rareza** y, bajo el nombre, el badge de **calidad** necesaria.
 - Colores por rareza (RGB) del nombre:
@@ -106,7 +115,7 @@ Tabla con una fila por coincidencia: `Ciclo`, `Renacer`, `Créditos`, `Calidad n
   4. Si tampoco existe `DEFAULT`, se usa `resources/Droidex-logo.PNG`.
 - La calidad `KYBER` todavía no tiene imágenes propias en `images_droids.csv` ni en `resources/`, así que todos los droides KYBER caen al paso 3 y muestran su imagen `DEFAULT`. Cuando se añadan los ficheros `NOMBRE_KYBER.webp` basta con una fila más en `images_droids.csv`: el paso 1 los empezará a usar automáticamente.
 - **Badge ÚLTIMO**: debajo del badge de calidad aparece la etiqueta `ÚLTIMO` (badge rojo/naranja destacado, `.droid-last`) cuando ese droide no vuelve a aparecer en ningún renacer posterior **del mismo ciclo**. Se calcula con `buildLastAppearance(ciclo)`, que precalcula el renacer máximo en que aparece cada droide dentro del ciclo; si el renacer de la fila coincide con ese máximo, se muestra la etiqueta.
-- Si no quedan renaceres en el ciclo, se muestra el mensaje "No quedan renaceres superiores en este ciclo.".
+- Si no quedan renaceres en el ciclo (o por encima del renacer elegido), se muestra el mensaje "No quedan renaceres en este ciclo."
 
 ### Modal de costes de rareza
 - Se abre desde la opción **Costes Rareza** del menú superior (`#menu-cost-rarity`).

@@ -250,8 +250,16 @@ function initCicloDropdown(cycleCount) {
     }
 }
 
-function initRenacerDropdown(maxRenacer) {
+function initRenacerDropdown(cicloFilter) {
     const select = document.getElementById('renacer');
+    select.innerHTML = '';
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = '-- Todos --';
+    select.appendChild(placeholder);
+    const maxRenacer = rebirths
+        .filter(rb => String(rb.ciclo) === cicloFilter)
+        .reduce((max, rb) => Math.max(max, rb.renacer), 0);
     for (let i = 1; i <= maxRenacer; i++) {
         const opt = document.createElement('option');
         opt.value = String(i);
@@ -290,13 +298,11 @@ function initDroidDropdown(droidNames) {
     }
 }
 
-function findRebirths(droidName, cicloFilter, renacerFilter) {
+function findRebirths(droidName, cicloFilter) {
     const results = [];
     let maxRarity = null;
-    const fromRenacer = parseInt(renacerFilter, 10);
     for (const rb of rebirths) {
         if (String(rb.ciclo) !== cicloFilter) continue;
-        if (rb.renacer <= fromRenacer) continue;
 
         const slots = [
             { cell: rb.droid1, slot: 1 },
@@ -329,7 +335,7 @@ function findRebirths(droidName, cicloFilter, renacerFilter) {
 }
 
 function findRemainingRebirths(cicloFilter, renacerFilter) {
-    const fromRenacer = parseInt(renacerFilter, 10);
+    const fromRenacer = renacerFilter ? parseInt(renacerFilter, 10) : 0;
     const remaining = [];
     for (const rb of rebirths) {
         if (String(rb.ciclo) !== cicloFilter) continue;
@@ -403,25 +409,50 @@ function renderDroidCell(cell, renacer, lastAppearance) {
     `;
 }
 
-function renderResults(payload) {
-    const { rebirthResults, maxRarity, droidName, currentRarity, remaining } = payload;
+function renderRemaining(ciclo, renacerFilter) {
+    const remaining = findRemainingRebirths(ciclo, renacerFilter);
+    document.getElementById('results').classList.remove('hidden');
+    document.getElementById('restantes-ciclo').textContent = ciclo;
 
-    const resultsSection = document.getElementById('results');
+    const remainingBody = document.querySelector('#remaining-table tbody');
+    remainingBody.innerHTML = '';
+    const lastAppearance = buildLastAppearance(ciclo);
+    for (const rb of remaining) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>Renacer ${rb.renacer}</td>
+            <td>${renderDroidCell(rb.droid1, rb.renacer, lastAppearance)}</td>
+            <td>${renderDroidCell(rb.droid2, rb.renacer, lastAppearance)}</td>
+            <td>${renderDroidCell(rb.droid3, rb.renacer, lastAppearance)}</td>
+        `;
+        remainingBody.appendChild(tr);
+    }
+    document.getElementById('remaining-count').textContent =
+        remaining.length === 0
+            ? 'No quedan renaceres en este ciclo.'
+            : renacerFilter
+                ? `Quedan ${remaining.length} renacer(es) a partir del renacer ${renacerFilter} en este ciclo.`
+                : `El ciclo tiene ${remaining.length} renacer(es).`;
+}
+
+function renderDroidResults(payload) {
+    const { rebirthResults, maxRarity, droidName, currentRarity, ciclo } = payload;
+
     const emptySection = document.getElementById('empty');
     const errorSection = document.getElementById('error');
     errorSection.classList.add('hidden');
     errorSection.textContent = '';
 
-    if (rebirthResults.length === 0 && remaining.length === 0) {
-        resultsSection.classList.add('hidden');
+    const cardDroide = document.getElementById('card-droide');
+    if (rebirthResults.length === 0) {
+        cardDroide.classList.add('hidden');
         emptySection.classList.remove('hidden');
-        const renacerVal = document.getElementById('renacer').value;
         emptySection.querySelector('p').textContent =
-            `No se han encontrado renaceres para ${droidName} a partir del renacer ${renacerVal} en este ciclo.`;
+            `No se ha encontrado ningún renacer en el ciclo ${ciclo} donde se necesite ${droidName}.`;
         return;
     }
     emptySection.classList.add('hidden');
-    resultsSection.classList.remove('hidden');
+    cardDroide.classList.remove('hidden');
 
     const droidRarityRow = RARITY_TO_UPGRADE_KEY[getDroidRarity(droidName)] || null;
     let upgradeRow = null;
@@ -434,7 +465,7 @@ function renderResults(payload) {
     breakdownTable.classList.add('hidden');
 
     if (!maxRarity) {
-        summary.innerHTML = `El droide <strong>${escapeHtml(droidName)}</strong> no aparece en ningún renacer posterior al actual en este ciclo, así que no hay ninguna calidad máxima que calcular.`;
+        summary.innerHTML = `El droide <strong>${escapeHtml(droidName)}</strong> no aparece en ningún renacer de este ciclo, así que no hay ninguna calidad máxima que calcular.`;
     } else if (!upgradeRow) {
         summary.innerHTML = `Tu droide <strong>${escapeHtml(droidName)}</strong> necesita llegar a ${rarityBadge(maxRarity)}. No hay tabla de mejoras disponible para esta rareza base.`;
     } else {
@@ -473,27 +504,7 @@ function renderResults(payload) {
     }
 
     document.getElementById('rebirths-count').textContent =
-        rebirthResults.length === 0
-            ? 'No se han encontrado renaceres donde se necesite este droide.'
-            : `Se han encontrado ${rebirthResults.length} renacer(es) donde se necesita el droide.`;
-
-    const remainingBody = document.querySelector('#remaining-table tbody');
-    remainingBody.innerHTML = '';
-    const lastAppearance = buildLastAppearance(payload.ciclo);
-    for (const rb of remaining) {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>Renacer ${rb.renacer}</td>
-            <td>${renderDroidCell(rb.droid1, rb.renacer, lastAppearance)}</td>
-            <td>${renderDroidCell(rb.droid2, rb.renacer, lastAppearance)}</td>
-            <td>${renderDroidCell(rb.droid3, rb.renacer, lastAppearance)}</td>
-        `;
-        remainingBody.appendChild(tr);
-    }
-    document.getElementById('remaining-count').textContent =
-        remaining.length === 0
-            ? 'No quedan renaceres superiores en este ciclo.'
-            : `Quedan ${remaining.length} renacer(es) por encima del actual en este ciclo.`;
+        `Se han encontrado ${rebirthResults.length} renacer(es) donde se necesita el droide en este ciclo.`;
 }
 
 function getDroidRarity(droidName) {
@@ -545,7 +556,6 @@ function activateTab(tabId) {
     const tabs = [
         { btn: 'tab-necesario', panel: 'panel-necesario' },
         { btn: 'tab-coste', panel: 'panel-coste' },
-        { btn: 'tab-restantes', panel: 'panel-restantes' },
     ];
     for (const t of tabs) {
         const btn = document.getElementById(t.btn);
@@ -758,9 +768,8 @@ async function init() {
         window._droidRarityMap = qualityMap;
 
         rebirths = cycleTexts.flatMap((text, idx) => loadRebirths(parseCSV(text), idx + 1));
-        const maxRenacer = rebirths.reduce((max, rb) => Math.max(max, rb.renacer), 0);
         initCicloDropdown(cycleTexts.length);
-        initRenacerDropdown(maxRenacer);
+        initRenacerDropdown(document.getElementById('ciclo').value);
     } catch (e) {
         showError(`Error cargando datos: ${e.message}. Asegúrate de servir la app desde un servidor HTTP.`);
         return;
@@ -769,6 +778,20 @@ async function init() {
     document.getElementById('rareza-select').addEventListener('change', updateDroidDropdown);
     document.getElementById('clase').addEventListener('change', updateDroidDropdown);
 
+    document.getElementById('ciclo').addEventListener('change', () => {
+        const ciclo = document.getElementById('ciclo').value;
+        initRenacerDropdown(ciclo);
+        renderRemaining(ciclo, document.getElementById('renacer').value);
+    });
+
+    document.getElementById('renacer').addEventListener('change', () => {
+        renderRemaining(document.getElementById('ciclo').value, document.getElementById('renacer').value);
+    });
+
+    document.getElementById('ver-restantes').addEventListener('click', () => {
+        renderRemaining(document.getElementById('ciclo').value, document.getElementById('renacer').value);
+    });
+
     document.getElementById('buscar').addEventListener('click', () => {
         const droide = document.getElementById('droide').value;
         if (!droide) {
@@ -776,20 +799,19 @@ async function init() {
             return;
         }
         const ciclo = document.getElementById('ciclo').value;
-        const renacer = document.getElementById('renacer').value;
         const calidad = document.getElementById('calidad').value;
 
-        const { results, maxRarity } = findRebirths(droide, ciclo, renacer);
-        const remaining = findRemainingRebirths(ciclo, renacer);
-        const payload = { rebirthResults: results, maxRarity, droidName: droide, currentRarity: calidad, remaining, ciclo };
+        const { results, maxRarity } = findRebirths(droide, ciclo);
+        const payload = { rebirthResults: results, maxRarity, droidName: droide, currentRarity: calidad, ciclo };
         lastResults = payload;
         activateTab('tab-necesario');
-        renderResults(payload);
+        renderDroidResults(payload);
     });
 
     document.getElementById('tab-necesario').addEventListener('click', () => activateTab('tab-necesario'));
     document.getElementById('tab-coste').addEventListener('click', () => activateTab('tab-coste'));
-    document.getElementById('tab-restantes').addEventListener('click', () => activateTab('tab-restantes'));
+
+    renderRemaining(document.getElementById('ciclo').value, document.getElementById('renacer').value);
 
     document.getElementById('menu-super-rebirths').addEventListener('click', openSuperRebirthsModal);
     document.getElementById('super-rebirths-close').addEventListener('click', closeSuperRebirthsModal);
