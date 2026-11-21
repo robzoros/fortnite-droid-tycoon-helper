@@ -5,7 +5,7 @@
 
 ## Contexto del proyecto
 
-Aplicación para saber dónde se necesitará un droide a partir del renacer actual del jugador y, en su caso, cuánto costaría actualizarlo en chips. El juego consiste en una serie de renaceres y super renaceres. Tras los super renaceres se cambia de ciclo (1 → 2 → 3 → 4 → 5).
+Aplicación para saber dónde se necesitará un droide a partir del renacer actual del jugador y, en su caso, cuánto costaría actualizarlo en chips. El juego consiste en una serie de renaceres y super renaceres. Tras los super renaceres se cambia de ciclo (1 → 2 → 3 → 4 → 5 → 6).
 
 ### Terminología del juego
 
@@ -13,7 +13,7 @@ Los droides se dividen por **Rareza** (nivel base y probabilidad de aparición),
 
 - **Rareza**: `Common`, `Rare`, `Epic`, `Legendary`, `Mythic`, `Iconic`.
 - **Calidad**: `Default`, `Gold`, `Diamond`, `Rainbow`, `Beskar`, `Galactic`, `Stellar`, `Kyber`.
-- **Clase**: `Worker` (Trabajadores), `Astromech` (Astromecánicos), `Battle` (Combate).
+- **Clase**: `Worker` (Trabajadores), `Astromech` (Astromecánicos), `Battle` (Combate), `Protocol` (Protocolo). La lista de clases se deriva dinámicamente de `droids.csv`, así que una clase nueva del juego aparece sola en la UI.
 
 En la UI y en el código se usan los términos **Rareza**, **Clase** y **Calidad** de forma consistente. **No** mezclar ni usar "rareza" para designar lo que el juego llama "calidad", ni "tipo" para lo que el juego llama "clase".
 

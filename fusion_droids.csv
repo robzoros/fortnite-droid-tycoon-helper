@@ -16,3 +16,14 @@ LOW-MO,Worker,Mythic,Loadlifter,A-LT,A-LT,,,,62.40K/s,124.8K/s,343.20K/s,975K/s
 AXI-POD,Astromech,Mythic,R7,BDX Explorer,RIC,8.0K/s,,32K/s,64.0K/s,128.0K/s,352.0K/s,1M/s
 SRV-O,Battle,Mythic,RIC-1200,B1 Heavy,B1 Heavy,7.60K/s,,,60.8K/s,121.6K/s,,950K/s
 X-ONK,Battle,Mythic,KX,KX,GONK,8.0K/s,,,64.0K/s,128.0K/s,352.0K/s,1M/s
+ION PROBE,Worker,Common,Mouse,Mouse,ID10,,,,,,,
+QUAD SENTRY,Astromech,Common,R5,R5,ID10,,,,,,,
+LFT-3R,Battle,Common,Imperial Probe,Imperial Probe,GONK,,,,,,,
+STRD-3,Worker,Epic,Senate Hovercam,Senate Hovercam,MPH,,,,,,,
+BI-BIT,Astromech,Epic,R9,R9,EGL,,,,,,,
+TOR-Q,Battle,Legendary,KT,KT,B2-RP,,,,,,,
+HV-EE,Astromech,Legendary,BB9,BB9,JO9-4MN,,,,,,,
+AX-L,Battle,MÍTICO,IG,IG,MPH,,,,,,,
+MO-TRO,Astromech,Mythic,A-LT,A-LT,ECG,,,,,,,
+SKM-MR,Astromech,Mythic,A-LT,A-LT,Snow Mouse,,,,,,,
+KL-NK,Protocol,Mythic,PZ,PZ,RIC,,,,,,,
